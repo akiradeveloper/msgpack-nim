@@ -13,6 +13,6 @@ script:
   - set -e
   - set -x
   - make test
-  - make quicktest
+  - make quickcheck
 notifications:
   email: false

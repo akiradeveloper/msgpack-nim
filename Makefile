@@ -2,9 +2,9 @@ test:
 	nim c msgpack
 	./msgpack
 
-quicktest:
+quickcheck:
 	ghc GenTests.hs
 	./GenTests > test
 	ruby gentest.rb test
-	nim c test
+	nim c -d:release test
 	./test
