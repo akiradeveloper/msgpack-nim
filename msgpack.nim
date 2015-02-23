@@ -13,23 +13,23 @@ type
     mkFalse,
     mkTrue,
     mkFixArray
-  Msg = object
+  Msg* = object
     case kind: MsgKind
     of mkNil: nil
     of mkFalse: nil
     of mkTrue: nil
     of mkFixArray: v: seq[Msg]
 
-proc Nil(): Msg =
+proc Nil*(): Msg =
   Msg(kind: mkNil)
 
-proc False(): Msg =
+proc False*(): Msg =
   Msg(kind: mkFalse)
 
-proc True(): Msg =
+proc True*(): Msg =
   Msg(kind: mkTrue)
 
-proc FixArray(v: seq[Msg]): Msg =
+proc FixArray*(v: seq[Msg]): Msg =
   Msg(kind: mkFixArray, v: v)
 
 # should be redesigned so using seq[uint8] is presumed
@@ -102,7 +102,7 @@ proc unpack(upc: Unpacker): Msg =
 
 # ------------------------------------------------------------------------------
 
-template t(msg: Msg) =
+proc t*(msg: Msg) =
   let buf = Buffer (
     raw: newSeq[uint8](128),
     pos: 0

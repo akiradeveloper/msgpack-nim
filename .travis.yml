@@ -12,5 +12,6 @@ script:
   - set -e
   - set -x
   - make test
+  - make quicktest
 notifications:
   email: false

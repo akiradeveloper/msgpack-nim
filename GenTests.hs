@@ -1,15 +1,20 @@
+import Data.List
 import Test.QuickCheck
 import Control.Monad
 
 data Msg =
     MsgNil
   | MsgFalse
-  | MsgTrue 
+  | MsgTrue
   | MsgFixArray [Msg]
-  deriving (Show)
 
--- instance Show Msg where
---   show x = "hoge"
+msgShow MsgNil = "Nil()"
+msgShow MsgFalse = "False()"
+msgShow MsgTrue = "True()"
+msgShow (MsgFixArray xs) = "FixArray(@[" ++ (intercalate "," $ map msgShow xs) ++ "])"
+
+instance Show Msg where
+   show = msgShow
 
 instance Arbitrary Msg where
   arbitrary = do
@@ -24,5 +29,5 @@ instance Arbitrary Msg where
         return $ MsgFixArray list
 
 main = do
-  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..10]] :: IO [Msg]
+  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
   forM_ msges (\msg -> print $ msg)
