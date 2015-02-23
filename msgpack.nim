@@ -13,12 +13,16 @@ type
     mkFalse,
     mkTrue,
     mkFixArray
+    mkPFixNum
+    mkNFixNum
   Msg* = object
     case kind: MsgKind
     of mkNil: nil
     of mkFalse: nil
     of mkTrue: nil
     of mkFixArray: v: seq[Msg]
+    of mkPFixNum: pfv: uint8
+    of mkNFixNum: nfv: uint8
 
 proc Nil*(): Msg =
   Msg(kind: mkNil)
@@ -31,6 +35,12 @@ proc True*(): Msg =
 
 proc FixArray*(v: seq[Msg]): Msg =
   Msg(kind: mkFixArray, v: v)
+
+proc PFixNum*(v: uint8): Msg =
+  Msg(kind: mkPFixNum, pfv: v)
+
+proc NFixNum*(v: uint8): Msg =
+  Msg(kind: mkNFixNum, nfv: v)
 
 # should be redesigned so using seq[uint8] is presumed
 # pointer arithmetics?
@@ -67,6 +77,14 @@ proc pack(pc: Packer, msg: Msg) =
     pc.buf.appendBe8(h.uint8)
     for e in msg.v:
       pc.pack(e)
+  of mkPFixNum:
+    echo "pfixnum"
+    let h = 0x7f and msg.pfv.int
+    pc.buf.appendBe8(h.uint8)
+  of mkNFixNum:
+    echo "nfixnum"
+    let h = 0xe0 or msg.nfv.int
+    pc.buf.appendBe8(h.uint8)
 
 type Unpacker = ref object
   buf: Buffer
@@ -97,6 +115,14 @@ proc unpack(upc: Unpacker): Msg =
     for i in 0..(sz-1):
       v.add(upc.unpack())
     FixArray(v)
+  of 0x00..0x7f:
+    echo "pfixnum"
+    let v = h.int and 0x7f
+    PFixNum(v.uint8)
+  of 0xe0..0xff:
+    echo "nfixnum"
+    let v = h.int and 0x1f
+    NFixNum(v.uint8)
   else:
     Nil() # tmp
 
@@ -121,3 +147,5 @@ when isMainModule:
   t(False())
   t(True())
   t(FixArray(@[True(), False()]))
+  t(PFixNum(127))
+  t(NFixNum(31))

@@ -14,7 +14,7 @@ Keep watching!
 
 Checklist:
 
-* positive fix int  
+* ~~positive fix int~~  
 * fixmap  
 * ~~fixarray~~  
 * fixstr  
@@ -45,7 +45,7 @@ Checklist:
 * array 32  
 * map 16  
 * map 32  
-* negative fixint  
+* ~~negative fixint~~  
 
 ### Browse API
 
