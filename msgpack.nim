@@ -54,6 +54,11 @@ type Buffer = ref object
   raw: seq[uint8]
   pos: int
 
+proc ensureMore(buf: Buffer, addLen: int) =
+  # If more buffer is required we will double the size
+  if (buf.pos + addLen) >= len(buf.raw):
+    buf.raw.setLen(len(buf.raw) * 2)
+
 proc appendBe8(buf: Buffer, v: uint8) =
   buf.raw[buf.pos] = v
   buf.pos += 1
@@ -75,35 +80,43 @@ proc mkPacker(buf: Buffer): Packer =
   )
 
 proc pack(pc: Packer, msg: Msg) =
+  let buf = pc.buf
   case msg.kind:
   of mkNil:
     echo "nil"
-    pc.buf.appendBe8(0xc0)
+    buf.ensureMore(1)
+    buf.appendBe8(0xc0)
   of mkFalse:
     echo "false"
-    pc.buf.appendBe8(0xc2)
+    buf.ensureMore(1)
+    buf.appendBe8(0xc2)
   of mkTrue:
     echo "true"
-    pc.buf.appendBe8(0xc3)
+    buf.ensureMore(1)
+    buf.appendBe8(0xc3)
   of mkFixArray:
     echo "fixarray"
     let h = 0x90 or len(msg.v)
-    pc.buf.appendBe8(h.uint8)
+    buf.ensureMore(1)
+    buf.appendBe8(h.uint8)
     for e in msg.v:
       pc.pack(e)
   of mkPFixNum:
     echo "pfixnum"
     let h = 0x7f and msg.pfv.int
-    pc.buf.appendBe8(h.uint8)
+    buf.ensureMore(1)
+    buf.appendBe8(h.uint8)
   of mkNFixNum:
     echo "nfixnum"
     let h = 0xe0 or msg.nfv.int
-    pc.buf.appendBe8(h.uint8)
+    buf.ensureMore(1)
+    buf.appendBe8(h.uint8)
   of mkU16:
     echo "u16"
-    pc.buf.appendBe8(0xcd)
+    buf.ensureMore(1+2)
+    buf.appendBe8(0xcd)
     var v = msg.vU16
-    bigEndian16(addr(pc.buf.raw[pc.buf.pos]), addr(v))
+    bigEndian16(addr(buf.raw[buf.pos]), addr(v))
 
 type Unpacker = ref object
   buf: Buffer
@@ -114,8 +127,10 @@ proc mkUnpacker(buf: Buffer): Unpacker =
   )
 
 proc unpack(upc: Unpacker): Msg =
-  let h = upc.buf.raw[upc.buf.pos]
-  upc.buf.pos += 1
+  let buf = upc.buf
+  let h = buf.raw[buf.pos]
+  buf.pos += 1
+
   echo h
   case h
   of 0xc0:
@@ -144,8 +159,8 @@ proc unpack(upc: Unpacker): Msg =
     NFixNum(v.uint8)
   of 0xcd:
     echo "u16"
-    let v = fromBe16(addr(upc.buf.raw[upc.buf.pos]))
-    upc.buf.pos += 2
+    let v = fromBe16(addr(buf.raw[buf.pos]))
+    buf.pos += 2
     U16(cast[uint16](v))
   else:
     Nil() # tmp
