@@ -3,10 +3,13 @@ import Control.Monad
 
 data Msg =
     MsgNil
-	| MsgFalse
-	| MsgTrue 
-	| MsgFixArray [Msg]
-	deriving (Show)
+  | MsgFalse
+  | MsgTrue 
+  | MsgFixArray [Msg]
+  deriving (Show)
+
+-- instance Show Msg where
+--   show x = "hoge"
 
 instance Arbitrary Msg where
   arbitrary = do
