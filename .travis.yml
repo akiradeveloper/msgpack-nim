@@ -9,6 +9,9 @@ install:
 before_script:
   - export PATH=`pwd`/Nim/bin:$PATH
 script:
+  - set -e
+  - set -x
   - nim c msgpack.nim
+  - ./msgpack
 notifications:
   email: false
