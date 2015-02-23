@@ -20,4 +20,5 @@ instance Arbitrary Msg where
         return $ MsgFixArray list
 
 main = do
-  sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..10]]
+  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..10]] :: IO [Msg]
+  print msges
