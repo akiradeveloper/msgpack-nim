@@ -9,11 +9,15 @@ data Msg =
 
 instance Arbitrary Msg where
   arbitrary = do
-    n <- choose (1,3) :: Gen Int
+    n <- choose (1,4) :: Gen Int
     case n of
       1 -> return MsgNil
       2 -> return MsgFalse
       3 -> return MsgTrue
+      4 -> do
+        l <- choose (1,3) :: Gen Int
+        list <- sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
+        return $ MsgFixArray list
 
 main = do
   sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..10]]
