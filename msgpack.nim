@@ -5,6 +5,7 @@
 
 # ------------------------------------------------------------------------------
 
+import endians
 import unsigned
 
 type
@@ -15,6 +16,7 @@ type
     mkFixArray
     mkPFixNum
     mkNFixNum
+    mkU16
   Msg* = object
     case kind: MsgKind
     of mkNil: nil
@@ -23,6 +25,7 @@ type
     of mkFixArray: v: seq[Msg]
     of mkPFixNum: pfv: uint8
     of mkNFixNum: nfv: uint8
+    of mkU16: vU16: uint16
 
 proc Nil*(): Msg =
   Msg(kind: mkNil)
@@ -42,6 +45,9 @@ proc PFixNum*(v: uint8): Msg =
 proc NFixNum*(v: uint8): Msg =
   Msg(kind: mkNFixNum, nfv: v)
 
+proc U16*(v: uint16): Msg =
+  Msg(kind: mkU16, vU16: v)
+
 # should be redesigned so using seq[uint8] is presumed
 # pointer arithmetics?
 type Buffer = ref object
@@ -51,6 +57,14 @@ type Buffer = ref object
 proc appendBe8(buf: Buffer, v: uint8) =
   buf.raw[buf.pos] = v
   buf.pos += 1
+
+proc fromBe16(p: pointer): int16 =
+  when cpuEndian == littleEndian:
+    var v: int16
+    swapEndian16(addr(v), p)
+    v
+  else:
+    copyMem(addr(v), p, 2)
 
 type Packer = ref object
   buf: Buffer
@@ -85,6 +99,11 @@ proc pack(pc: Packer, msg: Msg) =
     echo "nfixnum"
     let h = 0xe0 or msg.nfv.int
     pc.buf.appendBe8(h.uint8)
+  of mkU16:
+    echo "u16"
+    pc.buf.appendBe8(0xcd)
+    var v = msg.vU16
+    bigEndian16(addr(pc.buf.raw[pc.buf.pos]), addr(v))
 
 type Unpacker = ref object
   buf: Buffer
@@ -123,6 +142,11 @@ proc unpack(upc: Unpacker): Msg =
     echo "nfixnum"
     let v = h.int and 0x1f
     NFixNum(v.uint8)
+  of 0xcd:
+    echo "u16"
+    let v = fromBe16(addr(upc.buf.raw[upc.buf.pos]))
+    upc.buf.pos += 2
+    U16(cast[uint16](v))
   else:
     Nil() # tmp
 
@@ -149,3 +173,4 @@ when isMainModule:
   t(FixArray(@[True(), False()]))
   t(PFixNum(127))
   t(NFixNum(31))
+  t(U16(10000))
