@@ -30,7 +30,7 @@ Checklist:
 * float 32  
 * float 64  
 * uint 8  
-* uint 16  
+* ~~uint 16~~  
 * uint 32  
 * uint 64  
 * fixext 1  
