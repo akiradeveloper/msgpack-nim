@@ -1,4 +1,5 @@
 import Test.QuickCheck
+import Control.Monad
 
 data Msg =
     MsgNil
@@ -21,4 +22,4 @@ instance Arbitrary Msg where
 
 main = do
   msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..10]] :: IO [Msg]
-  print msges
+  forM_ msges (\msg -> print $ msg)
