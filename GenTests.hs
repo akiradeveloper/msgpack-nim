@@ -10,7 +10,7 @@ data Msg =
   | MsgFixArray [Msg]
   | MsgPFixNum Int
   | MsgNFixNum Int
-  | MsgU16 Int
+  | MsgU16 Int -- use Word?
   | MsgU32 Int
   | MsgU64 Int
   | MsgFixStr String
@@ -19,11 +19,11 @@ msgShow MsgNil = "Nil()"
 msgShow MsgFalse = "False()"
 msgShow MsgTrue = "True()"
 msgShow (MsgFixArray xs) = "FixArray(@[" ++ (intercalate "," $ map msgShow xs) ++ "])"
-msgShow (MsgPFixNum n) = "PFixNum(" ++ show n ++ ")"
-msgShow (MsgNFixNum n) = "NFixNum(" ++ show n ++ ")"
-msgShow (MsgU16 n) = "U16(" ++ show n ++ ")"
-msgShow (MsgU32 n) = "U32(" ++ show n ++ ")"
-msgShow (MsgU64 n) = "U64(" ++ show n ++ ")"
+msgShow (MsgPFixNum n) = "PFixNum(" ++ show n ++ "'u8)"
+msgShow (MsgNFixNum n) = "NFixNum(" ++ show n ++ "'u8)"
+msgShow (MsgU16 n) = "U16(" ++ show n ++ "'u16)"
+msgShow (MsgU32 n) = "U32(" ++ show n ++ "'u32)"
+msgShow (MsgU64 n) = "U64(" ++ show n ++ "'u64)"
 msgShow (MsgFixStr s) = "FixStr(" ++ show s ++ ")"
 
 instance Show Msg where
@@ -54,11 +54,10 @@ instance Arbitrary Msg where
         n <- choose (0, (1 `shiftL` 16)-1) :: Gen Int
         return $ MsgU16 n
       8 -> do
-        -- 1 << 32 - 1 isn't recognized as uint32
-        n <- choose (0, (1 `shiftL` 16)-1) :: Gen Int
+        n <- choose (0, (1 `shiftL` 32)-1) :: Gen Int
         return $ MsgU32 n
       9 -> do
-        n <- choose (0, (1 `shiftL` 16)-1) :: Gen Int
+        n <- choose (0, (1 `shiftL` 63)-1) :: Gen Int
         return $ MsgU64 n
       10 -> do
         n <- choose (0, 31) :: Gen Int
