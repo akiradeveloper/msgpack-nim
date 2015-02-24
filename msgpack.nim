@@ -50,16 +50,16 @@ proc U16*(v: uint16): Msg =
 
 # should be redesigned so using seq[uint8] is presumed
 # pointer arithmetics?
-type Buffer = ref object
+type PackBuf = ref object
   raw: seq[uint8]
   pos: int
 
-proc ensureMore(buf: Buffer, addLen: int) =
+proc ensureMore(buf: PackBuf, addLen: int) =
   # If more buffer is required we will double the size
   if (buf.pos + addLen) >= len(buf.raw):
     buf.raw.setLen(len(buf.raw) * 2)
 
-proc appendBe8(buf: Buffer, v: uint8) =
+proc appendBe8(buf: PackBuf, v: uint8) =
   buf.raw[buf.pos] = v
   buf.pos += 1
 
@@ -71,10 +71,10 @@ proc fromBe16(p: pointer): int16 =
   else:
     copyMem(addr(v), p, 2)
 
-type Packer = ref object
-  buf: Buffer
+type Packer* = ref object
+  buf: PackBuf
 
-proc mkPacker(buf: Buffer): Packer =
+proc mkPacker(buf: PackBuf): Packer =
   Packer (
     buf: buf
   )
@@ -118,10 +118,15 @@ proc pack(pc: Packer, msg: Msg) =
     var v = msg.vU16
     bigEndian16(addr(buf.raw[buf.pos]), addr(v))
 
-type Unpacker = ref object
-  buf: Buffer
+# not used yet
+type UnpackBuf = ref object
+  p: pointer
+  pos: int
 
-proc mkUnpacker(buf: Buffer): Unpacker =
+type Unpacker = ref object
+  buf: PackBuf
+
+proc mkUnpacker(buf: PackBuf): Unpacker =
   Unpacker (
     buf: buf
   )
@@ -168,7 +173,7 @@ proc unpack(upc: Unpacker): Msg =
 # ------------------------------------------------------------------------------
 
 proc t*(msg: Msg) =
-  let buf = Buffer (
+  let buf = PackBuf (
     raw: newSeq[uint8](128),
     pos: 0
   )
