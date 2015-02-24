@@ -14,6 +14,7 @@ data Msg =
   | MsgPFixNum Int7Bit
   | MsgNFixNum Int5Bit
   | MsgU16 Uint16
+  | MsgFixStr String
 
 msgShow MsgNil = "Nil()"
 msgShow MsgFalse = "False()"
@@ -22,6 +23,7 @@ msgShow (MsgFixArray xs) = "FixArray(@[" ++ (intercalate "," $ map msgShow xs) +
 msgShow (MsgPFixNum (Int7Bit n)) = "PFixNum(" ++ show n ++ ")"
 msgShow (MsgNFixNum (Int5Bit n)) = "NFixNum(" ++ show n ++ ")"
 msgShow (MsgU16 (Uint16 n)) = "U16(" ++ show n ++ ")"
+msgShow (MsgFixStr s) = "FixStr(" ++ show s ++ ")"
 
 instance Show Msg where
    show = msgShow
@@ -41,9 +43,13 @@ instance Arbitrary Uint16 where
 		n <- choose (0,65535) :: Gen Int
 		return $ Uint16 n
 
+-- FIXME
+randStr :: Int -> String
+randStr n = map (\x -> 'a') [1..n]
+
 instance Arbitrary Msg where
   arbitrary = do
-    n <- choose (1,7) :: Gen Int
+    n <- choose (1,8) :: Gen Int
     case n of
       1 -> return MsgNil
       2 -> return MsgFalse
@@ -61,7 +67,10 @@ instance Arbitrary Msg where
       7 -> do
         n <- arbitrary
         return $ MsgU16 n
-
+      8 -> do
+        n <- choose (0,31) :: Gen Int
+        return $ MsgFixStr $ randStr n
+  
 main = do
   msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
   forM_ msges (\msg -> print $ msg)

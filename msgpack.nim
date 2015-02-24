@@ -123,6 +123,7 @@ proc pack(pc: Packer, msg: Msg) =
     var v = msg.vU16
     bigEndian16(addr(buf.raw[buf.pos]), addr(v))
   of mkFixStr:
+    echo "fixstr"
     let l = len(msg.vFixStr)
     let h = 0xa0 or l
     buf.ensureMore(1+l)
@@ -183,6 +184,13 @@ proc unpack(upc: Unpacker): Msg =
     let v = fromBe16(buf.p)
     buf.inc(2)
     U16(cast[uint16](v))
+  of 0xa0..0xbf:
+    echo "fixstr"
+    let l = h.int and 0x1f
+    var s = newString(l)
+    copyMem(addr(s[0]), buf.p, l)
+    buf.inc(l)
+    FixStr(s)
   else:
     Nil() # tmp
 
@@ -216,3 +224,4 @@ when isMainModule:
   t(PFixNum(127))
   t(NFixNum(31))
   t(U16(10000))
+  t(FixStr("akiradeveloper"))
