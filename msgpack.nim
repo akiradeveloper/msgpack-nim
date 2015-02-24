@@ -84,7 +84,7 @@ type PackBuf = ref object
 proc ensureMore(buf: PackBuf, addLen: int) =
   # If more buffer is required we will double the size
   if (buf.pos + addLen) >= len(buf.p):
-    buf.p.setLen(len(buf.p) * 2)
+    buf.p.setLen((len(buf.p) + addLen) * 2)
 
 proc appendBe8(buf: PackBuf, v: b8) =
   buf.p[buf.pos] = v
