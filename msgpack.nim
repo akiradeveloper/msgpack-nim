@@ -81,35 +81,6 @@ proc appendBe8(buf: PackBuf, v: uint8) =
   buf.p[buf.pos] = v
   buf.pos += 1
 
-proc fromBe8(p: pointer): uint8 =
-  cast[ptr uint8](p)[]
-
-proc fromBe16(p: pointer): int16 =
-  when cpuEndian == littleEndian:
-    var v: int16
-    swapEndian16(addr(v), p)
-    v
-  else:
-    copyMem(addr(v), p, 2)
-    v
-
-proc fromBe32(p: pointer): int32 =
-  when cpuEndian == littleEndian:
-    var v: int32
-    swapEndian32(addr(v), p)
-    v
-  else:
-    copyMem(addr(v), p, 4)
-    v
-
-proc fromBe64(p: pointer): int64 =
-  when cpuEndian == littleEndian:
-    var v: int64
-    swapEndian64(addr(v), p)
-    v
-  else:
-    copyMem(addr(v), p, 8)
-    v
 
 type Packer = ref object
   buf: PackBuf
@@ -189,6 +160,52 @@ proc inc(buf: UnpackBuf, n:int) =
   a += n
   buf.p = cast[pointer](a)
 
+proc fromBe8(p: pointer): uint8 =
+  cast[ptr uint8](p)[]
+
+proc popBe8(buf): auto =
+  result = fromBe8(buf.p)
+  buf.inc(1)
+
+proc fromBe16(p: pointer): int16 =
+  when cpuEndian == littleEndian:
+    var v: int16
+    swapEndian16(addr(v), p)
+    v
+  else:
+    copyMem(addr(v), p, 2)
+    v
+
+proc popBe16(buf): auto =
+  result = fromBe16(buf.p)
+  buf.inc(2)
+
+proc fromBe32(p: pointer): int32 =
+  when cpuEndian == littleEndian:
+    var v: int32
+    swapEndian32(addr(v), p)
+    v
+  else:
+    copyMem(addr(v), p, 4)
+    v
+
+proc popBe32(buf): auto =
+  result = fromBe32(buf.p)
+  buf.inc(4)
+
+proc fromBe64(p: pointer): int64 =
+  when cpuEndian == littleEndian:
+    var v: int64
+    swapEndian64(addr(v), p)
+    v
+  else:
+    copyMem(addr(v), p, 8)
+    v
+
+proc popBe64(buf): auto =
+  result = fromBe64(buf.p)
+  buf.inc(8)
+
 type Unpacker = ref object
   buf: UnpackBuf
 
@@ -199,9 +216,8 @@ proc mkUnpacker(buf: UnpackBuf): Unpacker =
 
 proc unpack(upc: Unpacker): Msg =
   let buf = upc.buf
-  let h = fromBe8(buf.p)
-  inc(buf, 1)
 
+  let h = buf.popBe8
   echo h
 
   case h
@@ -231,19 +247,13 @@ proc unpack(upc: Unpacker): Msg =
     NFixNum(v.uint8)
   of 0xcd:
     echo "u16"
-    let v = fromBe16(buf.p)
-    buf.inc(2)
-    U16(cast[uint16](v))
+    U16(cast[uint16](buf.popBe16))
   of 0xce:
     echo "u32"
-    let v = fromBe32(buf.p)
-    buf.inc(4)
-    U32(cast[uint32](v))
+    U32(cast[uint32](buf.popBe32))
   of 0xcf:
     echo "u64"
-    let v = fromBe64(buf.p)
-    buf.inc(8)
-    U64(cast[uint64](v))
+    U64(cast[uint64](buf.popBe64))
   of 0xa0..0xbf:
     echo "fixstr"
     let sz = h.int and 0x1f
