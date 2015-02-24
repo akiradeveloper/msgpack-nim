@@ -118,25 +118,29 @@ proc pack(pc: Packer, msg: Msg) =
     var v = msg.vU16
     bigEndian16(addr(buf.raw[buf.pos]), addr(v))
 
-# not used yet
 type UnpackBuf = ref object
   p: pointer
-  pos: int
+
+proc inc(buf: UnpackBuf, n:int) =
+  var a = cast[ByteAddress](buf.p)
+  a += n
+  buf.p = cast[pointer](a)
 
 type Unpacker = ref object
-  buf: PackBuf
+  buf: UnpackBuf
 
-proc mkUnpacker(buf: PackBuf): Unpacker =
+proc mkUnpacker(buf: UnpackBuf): Unpacker =
   Unpacker (
     buf: buf
   )
 
 proc unpack(upc: Unpacker): Msg =
   let buf = upc.buf
-  let h = buf.raw[buf.pos]
-  buf.pos += 1
+  let h = cast[ptr uint8](buf.p)[]
+  inc(buf, 1)
 
   echo h
+
   case h
   of 0xc0:
     echo "nil"
@@ -164,8 +168,8 @@ proc unpack(upc: Unpacker): Msg =
     NFixNum(v.uint8)
   of 0xcd:
     echo "u16"
-    let v = fromBe16(addr(buf.raw[buf.pos]))
-    buf.pos += 2
+    let v = fromBe16(buf.p)
+    buf.inc(2)
     U16(cast[uint16](v))
   else:
     Nil() # tmp
@@ -185,15 +189,12 @@ proc unpack*(p: pointer): Msg =
 
 proc t*(msg: Msg) =
   ## Test by cyclic translation
-  let buf = PackBuf (
-    raw: newSeq[uint8](128),
-    pos: 0
-  )
-  let pc = mkPacker(buf)
+  let packBuf = PackBuf(raw: newSeq[uint8](128), pos: 0)
+  let pc = mkPacker(packBuf)
   pc.pack(msg)
 
-  buf.pos = 0
-  let upc = mkUnpacker(buf)
+  let unpackbuf = UnpackBuf(p:addr(packBuf.raw[0]))
+  let upc = mkUnpacker(unpackBuf)
   let unpacked = upc.unpack()
   echo expr(unpacked)
   assert($expr(msg) == $expr(unpacked))
