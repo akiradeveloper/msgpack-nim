@@ -8,6 +8,8 @@
 import endians
 import unsigned
 
+type b8 = int8
+
 type
   MsgKind = enum
     mkNil
@@ -25,9 +27,9 @@ type
     of mkNil: nil
     of mkFalse: nil
     of mkTrue: nil
-    of mkFixArray: v: seq[Msg]
-    of mkPFixNum: pfv: uint8
-    of mkNFixNum: nfv: uint8
+    of mkFixArray: vFixArray: seq[Msg]
+    of mkPFixNum: vPFixNum: uint8
+    of mkNFixNum: vNFixNum: uint8
     of mkU16: vU16: uint16
     of mkU32: vU32: uint32
     of mkU64: vU64: uint64
@@ -43,13 +45,13 @@ proc True*(): Msg =
   Msg(kind: mkTrue)
 
 proc FixArray*(v: seq[Msg]): Msg =
-  Msg(kind: mkFixArray, v: v)
+  Msg(kind: mkFixArray, vFixArray: v)
 
 proc PFixNum*(v: uint8): Msg =
-  Msg(kind: mkPFixNum, pfv: v)
+  Msg(kind: mkPFixNum, vPFixNum: v)
 
 proc NFixNum*(v: uint8): Msg =
-  Msg(kind: mkNFixNum, nfv: v)
+  Msg(kind: mkNFixNum, vNFixNum: v)
 
 proc U16*(v: uint16): Msg =
   Msg(kind: mkU16, vU16: v)
@@ -78,6 +80,9 @@ proc ensureMore(buf: PackBuf, addLen: int) =
 proc appendBe8(buf: PackBuf, v: uint8) =
   buf.p[buf.pos] = v
   buf.pos += 1
+
+proc fromBe8(p: pointer): uint8 =
+  cast[ptr uint8](p)[]
 
 proc fromBe16(p: pointer): int16 =
   when cpuEndian == littleEndian:
@@ -131,19 +136,19 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(0xc3)
   of mkFixArray:
     echo "fixarray"
-    let h = 0x90 or len(msg.v)
+    let h = 0x90 or len(msg.vFixArray)
     buf.ensureMore(1)
     buf.appendBe8(h.uint8)
-    for e in msg.v:
+    for e in msg.vFixArray:
       pc.pack(e)
   of mkPFixNum:
     echo "pfixnum"
-    let h = 0x7f and msg.pfv.int
+    let h = 0x7f and msg.vPFixNum.int
     buf.ensureMore(1)
     buf.appendBe8(h.uint8)
   of mkNFixNum:
     echo "nfixnum"
-    let h = 0xe0 or msg.nfv.int
+    let h = 0xe0 or msg.vNFixNum.int
     buf.ensureMore(1)
     buf.appendBe8(h.uint8)
   of mkU16:
@@ -194,7 +199,7 @@ proc mkUnpacker(buf: UnpackBuf): Unpacker =
 
 proc unpack(upc: Unpacker): Msg =
   let buf = upc.buf
-  let h = cast[ptr uint8](buf.p)[]
+  let h = fromBe8(buf.p)
   inc(buf, 1)
 
   echo h
