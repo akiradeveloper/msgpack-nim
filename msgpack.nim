@@ -8,7 +8,6 @@
 import endians
 import unsigned
 
-type b8 = int8
 
 type
   MsgKind = enum
@@ -66,10 +65,12 @@ proc U64*(v: uint64): Msg =
 proc FixStr*(v: string): Msg =
   Msg(kind: mkFixStr, vFixStr: v)
 
-# should be redesigned so using seq[uint8] is presumed
-# pointer arithmetics?
+type b8 = int8
+type b16 = int16
+type b32 = int32
+type b64 = int64
 type PackBuf = ref object
-  p: seq[uint8]
+  p: seq[b8]
   pos: int
 
 proc ensureMore(buf: PackBuf, addLen: int) =
@@ -77,10 +78,9 @@ proc ensureMore(buf: PackBuf, addLen: int) =
   if (buf.pos + addLen) >= len(buf.p):
     buf.p.setLen(len(buf.p) * 2)
 
-proc appendBe8(buf: PackBuf, v: uint8) =
+proc appendBe8(buf: PackBuf, v: b8) =
   buf.p[buf.pos] = v
   buf.pos += 1
-
 
 type Packer = ref object
   buf: PackBuf
@@ -96,59 +96,59 @@ proc pack(pc: Packer, msg: Msg) =
   of mkNil:
     echo "nil"
     buf.ensureMore(1)
-    buf.appendBe8(0xc0)
+    buf.appendBe8(cast[b8](0xc0))
   of mkFalse:
     echo "false"
     buf.ensureMore(1)
-    buf.appendBe8(0xc2)
+    buf.appendBe8(cast[b8](0xc2))
   of mkTrue:
     echo "true"
     buf.ensureMore(1)
-    buf.appendBe8(0xc3)
+    buf.appendBe8(cast[b8](0xc3))
   of mkFixArray:
     echo "fixarray"
-    let h = 0x90 or len(msg.vFixArray)
+    let h: int = 0x90 or len(msg.vFixArray)
     buf.ensureMore(1)
-    buf.appendBe8(h.uint8)
+    buf.appendBe8(cast[b8](h.toU8))
     for e in msg.vFixArray:
       pc.pack(e)
   of mkPFixNum:
     echo "pfixnum"
-    let h = 0x7f and msg.vPFixNum.int
+    let h: int = 0x7f and msg.vPFixNum.int
     buf.ensureMore(1)
-    buf.appendBe8(h.uint8)
+    buf.appendBe8(cast[b8](h.toU8))
   of mkNFixNum:
     echo "nfixnum"
-    let h = 0xe0 or msg.vNFixNum.int
+    let h: int = 0xe0 or msg.vNFixNum.int
     buf.ensureMore(1)
-    buf.appendBe8(h.uint8)
+    buf.appendBe8(cast[b8](h.toU8))
   of mkU16:
     echo "u16"
     buf.ensureMore(1+2)
-    buf.appendBe8(0xcd)
+    buf.appendBe8(cast[b8](0xcd))
     var v = msg.vU16
     bigEndian16(addr(buf.p[buf.pos]), addr(v))
     buf.pos += 2
   of mkU32:
     echo "u32"
     buf.ensureMore(1+4)
-    buf.appendBe8(0xce)
+    buf.appendBe8(cast[b8](0xce))
     var v = msg.vU32
     bigEndian32(addr(buf.p[buf.pos]), addr(v))
     buf.pos += 4
   of mkU64:
     echo "u64"
     buf.ensureMore(1+8)
-    buf.appendBe8(0xcf)
+    buf.appendBe8(cast[b8](0xcf))
     var v = msg.vU64
     bigEndian64(addr(buf.p[buf.pos]), addr(v))
     buf.pos += 8
   of mkFixStr:
     echo "fixstr"
-    let sz = len(msg.vFixStr)
+    let sz: int = len(msg.vFixStr)
     let h = 0xa0 or sz
     buf.ensureMore(1+sz)
-    buf.appendBe8(h.uint8)
+    buf.appendBe8(cast[b8](h.toU8))
     var m = msg
     copyMem(addr(buf.p[buf.pos]), addr(m.vFixStr[0]), sz)
 
@@ -160,47 +160,47 @@ proc inc(buf: UnpackBuf, n:int) =
   a += n
   buf.p = cast[pointer](a)
 
-proc fromBe8(p: pointer): uint8 =
-  cast[ptr uint8](p)[]
+proc fromBe8(p: pointer): b8 =
+  cast[ptr b8](p)[]
 
-proc popBe8(buf): auto =
-  result = fromBe8(buf.p)
-  buf.inc(1)
-
-proc fromBe16(p: pointer): int16 =
+proc fromBe16(p: pointer): b16 =
+  var v: b16
   when cpuEndian == littleEndian:
-    var v: int16
     swapEndian16(addr(v), p)
     v
   else:
     copyMem(addr(v), p, 2)
     v
 
-proc popBe16(buf): auto =
-  result = fromBe16(buf.p)
-  buf.inc(2)
-
-proc fromBe32(p: pointer): int32 =
+proc fromBe32(p: pointer): b32 =
+  var v: b32
   when cpuEndian == littleEndian:
-    var v: int32
     swapEndian32(addr(v), p)
     v
   else:
     copyMem(addr(v), p, 4)
     v
 
-proc popBe32(buf): auto =
-  result = fromBe32(buf.p)
-  buf.inc(4)
-
-proc fromBe64(p: pointer): int64 =
+proc fromBe64(p: pointer): b64 =
   when cpuEndian == littleEndian:
-    var v: int64
+    var v: b64
     swapEndian64(addr(v), p)
     v
   else:
     copyMem(addr(v), p, 8)
     v
+
+proc popBe8(buf): auto =
+  result = fromBe8(buf.p)
+  buf.inc(1)
+
+proc popBe16(buf): auto =
+  result = fromBe16(buf.p)
+  buf.inc(2)
+
+proc popBe32(buf): auto =
+  result = fromBe32(buf.p)
+  buf.inc(4)
 
 proc popBe64(buf): auto =
   result = fromBe64(buf.p)
@@ -217,7 +217,7 @@ proc mkUnpacker(buf: UnpackBuf): Unpacker =
 proc unpack(upc: Unpacker): Msg =
   let buf = upc.buf
 
-  let h = buf.popBe8
+  let h = cast[uint8](buf.popBe8)
   echo h
 
   case h
@@ -232,19 +232,19 @@ proc unpack(upc: Unpacker): Msg =
     True()
   of 0x90..0x9f: # uint8
     echo "fixarray"
-    let sz: uint8 = h and 0x0f
+    let sz: int = h and 0x0f
     var v: seq[Msg] = @[]
     for i in 0..(sz-1):
       v.add(upc.unpack())
     FixArray(v)
   of 0x00..0x7f:
     echo "pfixnum"
-    let v = h.int and 0x7f
-    PFixNum(v.uint8)
+    let v: int = h and 0x7f
+    PFixNum(cast[uint8](v.toU8))
   of 0xe0..0xff:
     echo "nfixnum"
-    let v = h.int and 0x1f
-    NFixNum(v.uint8)
+    let v: int = h and 0x1f
+    NFixNum(cast[uint8](v.toU8))
   of 0xcd:
     echo "u16"
     U16(cast[uint16](buf.popBe16))
@@ -256,24 +256,27 @@ proc unpack(upc: Unpacker): Msg =
     U64(cast[uint64](buf.popBe64))
   of 0xa0..0xbf:
     echo "fixstr"
-    let sz = h.int and 0x1f
+    let sz: int = h.int and 0x1f
     var s = newString(sz)
     copyMem(addr(s[0]), buf.p, sz)
     buf.inc(sz)
     FixStr(s)
   else:
-    Nil() # tmp
+    assert(false) # not reachable
+    Nil()
 
 # At the initial release we won't open interfaces
 # other than the followings.
 
 proc pack*(msg: Msg): tuple[p: pointer, size: int] =
-  let packBuf = PackBuf(p: newSeq[uint8](128), pos: 0)
+  ## Serialize message to byte sequence
+  let packBuf = PackBuf(p: newSeq[b8](128), pos: 0)
   let pc = mkPacker(packBuf)
   pc.pack(msg)
   tuple(p: cast[pointer](addr(packBuf.p[0])), size: packBuf.pos)
 
 proc unpack*(p: pointer): Msg =
+  ## Deserialize byte sequence to message
   let unpackbuf = UnpackBuf(p:p)
   let upc = mkUnpacker(unpackBuf)
   upc.unpack()
