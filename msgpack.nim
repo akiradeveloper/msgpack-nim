@@ -71,7 +71,7 @@ proc fromBe16(p: pointer): int16 =
   else:
     copyMem(addr(v), p, 2)
 
-type Packer* = ref object
+type Packer = ref object
   buf: PackBuf
 
 proc mkPacker(buf: PackBuf): Packer =
@@ -170,9 +170,21 @@ proc unpack(upc: Unpacker): Msg =
   else:
     Nil() # tmp
 
+# At the initial release we won't open interfaces
+# other than the followings.
+
+proc pack*(msg: Msg): tuple[p: pointer, size: int] =
+  ## Not implemented yet
+  discard
+
+proc unpack*(p: pointer): Msg =
+  ## Not implemented yet
+  discard
+
 # ------------------------------------------------------------------------------
 
 proc t*(msg: Msg) =
+  ## Test by cyclic translation
   let buf = PackBuf (
     raw: newSeq[uint8](128),
     pos: 0
