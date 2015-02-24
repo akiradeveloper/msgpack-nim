@@ -182,8 +182,8 @@ proc fromBe32(p: pointer): b32 =
     v
 
 proc fromBe64(p: pointer): b64 =
+  var v: b64
   when cpuEndian == littleEndian:
-    var v: b64
     swapEndian64(addr(v), p)
     v
   else:
@@ -218,7 +218,7 @@ proc unpack(upc: Unpacker): Msg =
   let buf = upc.buf
 
   let h = cast[uint8](buf.popBe8)
-  echo h
+  echo h.int
 
   case h
   of 0xc0:
