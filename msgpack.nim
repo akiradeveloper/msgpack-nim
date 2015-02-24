@@ -17,6 +17,8 @@ type
     mkPFixNum
     mkNFixNum
     mkU16
+    mkU32
+    mkU64
     mkFIxStr
   Msg* = object
     case kind: MsgKind
@@ -27,6 +29,8 @@ type
     of mkPFixNum: pfv: uint8
     of mkNFixNum: nfv: uint8
     of mkU16: vU16: uint16
+    of mkU32: vU32: uint32
+    of mkU64: vU64: uint64
     of mkFixStr: vFixStr: string
 
 proc Nil*(): Msg =
@@ -50,22 +54,29 @@ proc NFixNum*(v: uint8): Msg =
 proc U16*(v: uint16): Msg =
   Msg(kind: mkU16, vU16: v)
 
+proc U32*(v: uint32): Msg =
+  Msg(kind: mkU32, vU32: v)
+
+# should take int64?
+proc U64*(v: uint64): Msg =
+  Msg(kind: mkU64, vU64: v)
+
 proc FixStr*(v: string): Msg =
   Msg(kind: mkFixStr, vFixStr: v)
 
 # should be redesigned so using seq[uint8] is presumed
 # pointer arithmetics?
 type PackBuf = ref object
-  raw: seq[uint8]
+  p: seq[uint8]
   pos: int
 
 proc ensureMore(buf: PackBuf, addLen: int) =
   # If more buffer is required we will double the size
-  if (buf.pos + addLen) >= len(buf.raw):
-    buf.raw.setLen(len(buf.raw) * 2)
+  if (buf.pos + addLen) >= len(buf.p):
+    buf.p.setLen(len(buf.p) * 2)
 
 proc appendBe8(buf: PackBuf, v: uint8) =
-  buf.raw[buf.pos] = v
+  buf.p[buf.pos] = v
   buf.pos += 1
 
 proc fromBe16(p: pointer): int16 =
@@ -75,6 +86,25 @@ proc fromBe16(p: pointer): int16 =
     v
   else:
     copyMem(addr(v), p, 2)
+    v
+
+proc fromBe32(p: pointer): int32 =
+  when cpuEndian == littleEndian:
+    var v: int32
+    swapEndian32(addr(v), p)
+    v
+  else:
+    copyMem(addr(v), p, 4)
+    v
+
+proc fromBe64(p: pointer): int64 =
+  when cpuEndian == littleEndian:
+    var v: int64
+    swapEndian64(addr(v), p)
+    v
+  else:
+    copyMem(addr(v), p, 8)
+    v
 
 type Packer = ref object
   buf: PackBuf
@@ -121,15 +151,30 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+2)
     buf.appendBe8(0xcd)
     var v = msg.vU16
-    bigEndian16(addr(buf.raw[buf.pos]), addr(v))
+    bigEndian16(addr(buf.p[buf.pos]), addr(v))
+    buf.pos += 2
+  of mkU32:
+    echo "u32"
+    buf.ensureMore(1+4)
+    buf.appendBe8(0xce)
+    var v = msg.vU32
+    bigEndian32(addr(buf.p[buf.pos]), addr(v))
+    buf.pos += 4
+  of mkU64:
+    echo "u64"
+    buf.ensureMore(1+8)
+    buf.appendBe8(0xcf)
+    var v = msg.vU64
+    bigEndian64(addr(buf.p[buf.pos]), addr(v))
+    buf.pos += 8
   of mkFixStr:
     echo "fixstr"
-    let l = len(msg.vFixStr)
-    let h = 0xa0 or l
-    buf.ensureMore(1+l)
+    let sz = len(msg.vFixStr)
+    let h = 0xa0 or sz
+    buf.ensureMore(1+sz)
     buf.appendBe8(h.uint8)
     var m = msg
-    copyMem(addr(buf.raw[buf.pos]), addr(m.vFixStr[0]), l)
+    copyMem(addr(buf.p[buf.pos]), addr(m.vFixStr[0]), sz)
 
 type UnpackBuf = ref object
   p: pointer
@@ -184,12 +229,22 @@ proc unpack(upc: Unpacker): Msg =
     let v = fromBe16(buf.p)
     buf.inc(2)
     U16(cast[uint16](v))
+  of 0xce:
+    echo "u32"
+    let v = fromBe32(buf.p)
+    buf.inc(4)
+    U32(cast[uint32](v))
+  of 0xcf:
+    echo "u64"
+    let v = fromBe64(buf.p)
+    buf.inc(8)
+    U64(cast[uint64](v))
   of 0xa0..0xbf:
     echo "fixstr"
-    let l = h.int and 0x1f
-    var s = newString(l)
-    copyMem(addr(s[0]), buf.p, l)
-    buf.inc(l)
+    let sz = h.int and 0x1f
+    var s = newString(sz)
+    copyMem(addr(s[0]), buf.p, sz)
+    buf.inc(sz)
     FixStr(s)
   else:
     Nil() # tmp
@@ -198,10 +253,10 @@ proc unpack(upc: Unpacker): Msg =
 # other than the followings.
 
 proc pack*(msg: Msg): tuple[p: pointer, size: int] =
-  let packBuf = PackBuf(raw: newSeq[uint8](128), pos: 0)
+  let packBuf = PackBuf(p: newSeq[uint8](128), pos: 0)
   let pc = mkPacker(packBuf)
   pc.pack(msg)
-  tuple(p: cast[pointer](addr(packBuf.raw[0])), size: packBuf.pos)
+  tuple(p: cast[pointer](addr(packBuf.p[0])), size: packBuf.pos)
 
 proc unpack*(p: pointer): Msg =
   let unpackbuf = UnpackBuf(p:p)
@@ -212,7 +267,8 @@ proc unpack*(p: pointer): Msg =
 
 proc t*(msg: Msg) =
   ## Test by cyclic translation
-  let (p, size) = pack(msg)
+  let (p, sz) = pack(msg)
+  discard sz
   let unpacked = unpack(p)
   assert($expr(msg) == $expr(unpacked))
 
@@ -224,4 +280,6 @@ when isMainModule:
   t(PFixNum(127))
   t(NFixNum(31))
   t(U16(10000))
+  t(U32(10000))
+  t(U64(10000))
   t(FixStr("akiradeveloper"))

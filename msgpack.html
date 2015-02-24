@@ -1166,7 +1166,10 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   of mkFixArray: v: seq[Msg]
   of mkPFixNum: pfv: uint8
   of mkNFixNum: nfv: uint8
-  of mkU16: vU16: uint16"><wbr />Msg</a></li>
+  of mkU16: vU16: uint16
+  of mkU32: vU32: uint32
+  of mkU64: vU64: uint64
+  of mkFixStr: vFixStr: string"><wbr />Msg</a></li>
 
   </ul>
 </li>
@@ -1187,6 +1190,12 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     title="NFixNum*(v: uint8): Msg"><wbr />NFix<wbr />Num</a></li>
   <li><a class="reference" href="#U16,uint16"
     title="U16*(v: uint16): Msg"><wbr />U16</a></li>
+  <li><a class="reference" href="#U32,uint32"
+    title="U32*(v: uint32): Msg"><wbr />U32</a></li>
+  <li><a class="reference" href="#U64,uint64"
+    title="U64*(v: uint64): Msg"><wbr />U64</a></li>
+  <li><a class="reference" href="#FixStr,string"
+    title="FixStr*(v: string): Msg"><wbr />Fix<wbr />Str</a></li>
   <li><a class="reference" href="#pack,Msg"
     title="pack*(msg: Msg): tuple[p: pointer, size: int]"><wbr />pack</a></li>
   <li><a class="reference" href="#unpack,pointer"
@@ -1219,6 +1228,9 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <span class="Keyword">of</span> <span class="Identifier">mkPFixNum</span><span class="Other">:</span> <span class="Identifier">pfv</span><span class="Other">:</span> <span class="Identifier">uint8</span>
   <span class="Keyword">of</span> <span class="Identifier">mkNFixNum</span><span class="Other">:</span> <span class="Identifier">nfv</span><span class="Other">:</span> <span class="Identifier">uint8</span>
   <span class="Keyword">of</span> <span class="Identifier">mkU16</span><span class="Other">:</span> <span class="Identifier">vU16</span><span class="Other">:</span> <span class="Identifier">uint16</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkU32</span><span class="Other">:</span> <span class="Identifier">vU32</span><span class="Other">:</span> <span class="Identifier">uint32</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkU64</span><span class="Other">:</span> <span class="Identifier">vU64</span><span class="Other">:</span> <span class="Identifier">uint64</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFixStr</span><span class="Other">:</span> <span class="Identifier">vFixStr</span><span class="Other">:</span> <span class="Identifier">string</span>
   </pre></dt>
 <dd>
 
@@ -1264,6 +1276,21 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
 
 
 </dd>
+<dt id="U32"><a name="U32,uint32"></a><pre><span class="Keyword">proc</span> <span class="Identifier">U32</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">uint32</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="U64"><a name="U64,uint64"></a><pre><span class="Keyword">proc</span> <span class="Identifier">U64</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">uint64</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="FixStr"><a name="FixStr,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">FixStr</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
 <dt id="pack"><a name="pack,Msg"></a><pre><span class="Keyword">proc</span> <span class="Identifier">pack</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">msg</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">)</span><span class="Other">:</span> <span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">pointer</span><span class="Other">,</span> <span class="Identifier">size</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">]</span></pre></dt>
 <dd>
 
@@ -1289,7 +1316,7 @@ Test by cyclic translation
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-02-24 11:18:41 UTC</small>
+        <small>Made with Nim. Generated: 2015-02-24 20:10:53 UTC</small>
       </div>
     </div>
   </div>

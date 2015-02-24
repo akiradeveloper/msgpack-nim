@@ -31,8 +31,8 @@ Checklist:
 * float 64  
 * uint 8  
 * ~~uint 16~~  
-* uint 32  
-* uint 64  
+* ~~uint 32~~  
+* ~~uint 64~~  
 * fixext 1  
 * fixext 2  
 * fixext 4  
