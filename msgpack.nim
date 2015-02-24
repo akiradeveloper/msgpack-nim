@@ -178,25 +178,22 @@ proc unpack(upc: Unpacker): Msg =
 # other than the followings.
 
 proc pack*(msg: Msg): tuple[p: pointer, size: int] =
-  ## Not implemented yet
-  discard
+  let packBuf = PackBuf(raw: newSeq[uint8](128), pos: 0)
+  let pc = mkPacker(packBuf)
+  pc.pack(msg)
+  tuple(p: cast[pointer](addr(packBuf.raw[0])), size: packBuf.pos)
 
 proc unpack*(p: pointer): Msg =
-  ## Not implemented yet
-  discard
+  let unpackbuf = UnpackBuf(p:p)
+  let upc = mkUnpacker(unpackBuf)
+  upc.unpack()
 
 # ------------------------------------------------------------------------------
 
 proc t*(msg: Msg) =
   ## Test by cyclic translation
-  let packBuf = PackBuf(raw: newSeq[uint8](128), pos: 0)
-  let pc = mkPacker(packBuf)
-  pc.pack(msg)
-
-  let unpackbuf = UnpackBuf(p:addr(packBuf.raw[0]))
-  let upc = mkUnpacker(unpackBuf)
-  let unpacked = upc.unpack()
-  echo expr(unpacked)
+  let (p, size) = pack(msg)
+  let unpacked = unpack(p)
   assert($expr(msg) == $expr(unpacked))
 
 when isMainModule:
