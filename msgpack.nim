@@ -8,31 +8,36 @@
 import endians
 import unsigned
 
-
 type
   MsgKind = enum
     mkNil
     mkFalse
     mkTrue
     mkFixArray
+    mkFixMap
     mkPFixNum
     mkNFixNum
     mkU16
     mkU32
     mkU64
     mkFixStr
-  Msg* = object
+  Msg = ref MsgObj
+  MsgObj = object
     case kind: MsgKind
     of mkNil: nil
     of mkFalse: nil
     of mkTrue: nil
     of mkFixArray: vFixArray: seq[Msg]
+    of mkFixMap: vFixMap: seq[tuple[key:Msg, val:Msg]]
     of mkPFixNum: vPFixNum: uint8
     of mkNFixNum: vNFixNum: uint8
     of mkU16: vU16: uint16
     of mkU32: vU32: uint32
     of mkU64: vU64: uint64
     of mkFixStr: vFixStr: string
+
+proc `$`(msg: Msg): string =
+  $(msg[])
 
 proc Nil*(): Msg =
   Msg(kind: mkNil)
@@ -64,6 +69,9 @@ proc U64*(v: uint64): Msg =
 
 proc FixStr*(v: string): Msg =
   Msg(kind: mkFixStr, vFixStr: v)
+
+proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
+  discard
 
 type b8 = int8
 type b16 = int16
@@ -151,6 +159,9 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[b8](h.toU8))
     var m = msg
     copyMem(addr(buf.p[buf.pos]), addr(m.vFixStr[0]), sz)
+  of mkFixMap:
+    echo "fixmap"
+    discard
 
 type UnpackBuf = ref object
   p: pointer
