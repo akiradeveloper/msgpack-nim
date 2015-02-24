@@ -1163,9 +1163,9 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   of mkNil: nil
   of mkFalse: nil
   of mkTrue: nil
-  of mkFixArray: v: seq[Msg]
-  of mkPFixNum: pfv: uint8
-  of mkNFixNum: nfv: uint8
+  of mkFixArray: vFixArray: seq[Msg]
+  of mkPFixNum: vPFixNum: uint8
+  of mkNFixNum: vNFixNum: uint8
   of mkU16: vU16: uint16
   of mkU32: vU32: uint32
   of mkU64: vU64: uint64
@@ -1224,9 +1224,9 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <span class="Keyword">of</span> <span class="Identifier">mkNil</span><span class="Other">:</span> <span class="Keyword">nil</span>
   <span class="Keyword">of</span> <span class="Identifier">mkFalse</span><span class="Other">:</span> <span class="Keyword">nil</span>
   <span class="Keyword">of</span> <span class="Identifier">mkTrue</span><span class="Other">:</span> <span class="Keyword">nil</span>
-  <span class="Keyword">of</span> <span class="Identifier">mkFixArray</span><span class="Other">:</span> <span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">Msg</span><span class="Other">]</span>
-  <span class="Keyword">of</span> <span class="Identifier">mkPFixNum</span><span class="Other">:</span> <span class="Identifier">pfv</span><span class="Other">:</span> <span class="Identifier">uint8</span>
-  <span class="Keyword">of</span> <span class="Identifier">mkNFixNum</span><span class="Other">:</span> <span class="Identifier">nfv</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFixArray</span><span class="Other">:</span> <span class="Identifier">vFixArray</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">Msg</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkPFixNum</span><span class="Other">:</span> <span class="Identifier">vPFixNum</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkNFixNum</span><span class="Other">:</span> <span class="Identifier">vNFixNum</span><span class="Other">:</span> <span class="Identifier">uint8</span>
   <span class="Keyword">of</span> <span class="Identifier">mkU16</span><span class="Other">:</span> <span class="Identifier">vU16</span><span class="Other">:</span> <span class="Identifier">uint16</span>
   <span class="Keyword">of</span> <span class="Identifier">mkU32</span><span class="Other">:</span> <span class="Identifier">vU32</span><span class="Other">:</span> <span class="Identifier">uint32</span>
   <span class="Keyword">of</span> <span class="Identifier">mkU64</span><span class="Other">:</span> <span class="Identifier">vU64</span><span class="Other">:</span> <span class="Identifier">uint64</span>
@@ -1316,7 +1316,7 @@ Test by cyclic translation
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-02-24 20:10:53 UTC</small>
+        <small>Made with Nim. Generated: 2015-02-24 20:40:03 UTC</small>
       </div>
     </div>
   </div>
