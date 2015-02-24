@@ -13,15 +13,15 @@ type b8 = int8
 type
   MsgKind = enum
     mkNil
-    mkFalse,
-    mkTrue,
+    mkFalse
+    mkTrue
     mkFixArray
     mkPFixNum
     mkNFixNum
     mkU16
     mkU32
     mkU64
-    mkFIxStr
+    mkFixStr
   Msg* = object
     case kind: MsgKind
     of mkNil: nil
