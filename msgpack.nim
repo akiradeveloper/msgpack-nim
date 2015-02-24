@@ -1,5 +1,5 @@
 #
-#                          Msgpack binding for Nim
+#                        MessagePack binding for Nim
 #                     (c) Copyright 2015 Akira hayakawa
 #
 
