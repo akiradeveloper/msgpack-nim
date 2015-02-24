@@ -17,6 +17,7 @@ type
     mkPFixNum
     mkNFixNum
     mkU16
+    mkFIxStr
   Msg* = object
     case kind: MsgKind
     of mkNil: nil
@@ -26,6 +27,7 @@ type
     of mkPFixNum: pfv: uint8
     of mkNFixNum: nfv: uint8
     of mkU16: vU16: uint16
+    of mkFixStr: vFixStr: string
 
 proc Nil*(): Msg =
   Msg(kind: mkNil)
@@ -47,6 +49,9 @@ proc NFixNum*(v: uint8): Msg =
 
 proc U16*(v: uint16): Msg =
   Msg(kind: mkU16, vU16: v)
+
+proc FixStr*(v: string): Msg =
+  Msg(kind: mkFixStr, vFixStr: v)
 
 # should be redesigned so using seq[uint8] is presumed
 # pointer arithmetics?
@@ -117,6 +122,13 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(0xcd)
     var v = msg.vU16
     bigEndian16(addr(buf.raw[buf.pos]), addr(v))
+  of mkFixStr:
+    let l = len(msg.vFixStr)
+    let h = 0xa0 or l
+    buf.ensureMore(1+l)
+    buf.appendBe8(h.uint8)
+    var m = msg
+    copyMem(addr(buf.raw[buf.pos]), addr(m.vFixStr[0]), l)
 
 type UnpackBuf = ref object
   p: pointer
