@@ -2,6 +2,7 @@ import Data.List
 import Test.QuickCheck
 import Control.Monad
 import Data.Bits
+import Data.Word
 
 data Msg =
     MsgNil
@@ -10,9 +11,9 @@ data Msg =
   | MsgFixArray [Msg]
   | MsgPFixNum Int
   | MsgNFixNum Int
-  | MsgU16 Int -- use Word?
+  | MsgU16 Int
   | MsgU32 Int
-  | MsgU64 Int
+  | MsgU64 Word
   | MsgFixStr String
 
 msgShow MsgNil = "Nil()"
@@ -57,7 +58,7 @@ instance Arbitrary Msg where
         n <- choose (0, (1 `shiftL` 32)-1) :: Gen Int
         return $ MsgU32 n
       9 -> do
-        n <- choose (0, (1 `shiftL` 63)-1) :: Gen Int
+        n <- choose (0, (1 `shiftL` 63)-1) :: Gen Word
         return $ MsgU64 n
       10 -> do
         n <- choose (0, 31) :: Gen Int
