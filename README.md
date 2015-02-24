@@ -17,7 +17,7 @@ Checklist:
 * ~~positive fix int~~  
 * fixmap  
 * ~~fixarray~~  
-* fixstr  
+* ~~fixstr~~  
 * ~~nil~~  
 * ~~false~~  
 * ~~true~~  
