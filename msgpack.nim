@@ -71,7 +71,7 @@ proc FixStr*(v: string): Msg =
   Msg(kind: mkFixStr, vFixStr: v)
 
 proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
-  discard
+  Msg(kind: mkFixMap, vFixMap: v)
 
 type b8 = int8
 type b16 = int16
@@ -83,7 +83,7 @@ type PackBuf = ref object
 
 proc ensureMore(buf: PackBuf, addLen: int) =
   # If more buffer is required we will double the size
-  if (buf.pos + addLen) >= len(buf.p):
+  if unlikely((buf.pos + addLen) >= len(buf.p)):
     buf.p.setLen((len(buf.p) + addLen) * 2)
 
 proc appendBe8(buf: PackBuf, v: b8) =
@@ -161,7 +161,14 @@ proc pack(pc: Packer, msg: Msg) =
     copyMem(addr(buf.p[buf.pos]), addr(m.vFixStr[0]), sz)
   of mkFixMap:
     echo "fixmap"
-    discard
+    let sz = len(msg.vFixMap)
+    let h = 0x80 or sz
+    buf.ensureMore(1)
+    buf.appendBe8(cast[b8](h.toU8))
+    for e in msg.vFixMap:
+      let (k, v) = e
+      pc.pack(k)
+      pc.pack(v)
 
 type UnpackBuf = ref object
   p: pointer
@@ -248,6 +255,15 @@ proc unpack(upc: Unpacker): Msg =
     for i in 0..(sz-1):
       v.add(upc.unpack())
     FixArray(v)
+  of 0x80..0x8f:
+    echo "fixmap"
+    let sz: int = h and 0x0f
+    var v: seq[tuple[key:Msg, val:Msg]] = @[]
+    for i in 0..(sz-1):
+      let key = upc.unpack()
+      let val = upc.unpack()
+      v.add((key, val))
+    FixMap(v)
   of 0x00..0x7f:
     echo "pfixnum"
     let v: int = h and 0x7f
@@ -312,3 +328,4 @@ when isMainModule:
   t(U32(10000))
   t(U64(10000))
   t(FixStr("akiradeveloper"))
+  t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
