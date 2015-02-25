@@ -95,6 +95,21 @@ proc appendBe8(buf: PackBuf, v: b8) =
   buf.p[buf.pos] = v
   buf.pos += 1
 
+proc appendBe16(buf: PackBuf, v: b16) =
+  var vv = v
+  bigEndian16(addr(buf.p[buf.pos]), addr(vv))
+  buf.pos += 2
+
+proc appendBe32(buf: PackBuf, v: b32) =
+  var vv = v
+  bigEndian32(addr(buf.p[buf.pos]), addr(vv))
+  buf.pos += 4
+
+proc appendBe64(buf: PackBuf, v: b64) =
+  var vv = v
+  bigEndian64(addr(buf.p[buf.pos]), addr(vv))
+  buf.pos += 8
+
 type Packer = ref object
   buf: PackBuf
 
@@ -139,23 +154,17 @@ proc pack(pc: Packer, msg: Msg) =
     echo "u16"
     buf.ensureMore(1+2)
     buf.appendBe8(cast[b8](0xcd))
-    var v = msg.vU16
-    bigEndian16(addr(buf.p[buf.pos]), addr(v))
-    buf.pos += 2
+    buf.appendBe16(cast[b16](msg.vU16))
   of mkU32:
     echo "u32"
     buf.ensureMore(1+4)
     buf.appendBe8(cast[b8](0xce))
-    var v = msg.vU32
-    bigEndian32(addr(buf.p[buf.pos]), addr(v))
-    buf.pos += 4
+    buf.appendBe32(cast[b32](msg.vU32))
   of mkU64:
     echo "u64"
     buf.ensureMore(1+8)
     buf.appendBe8(cast[b8](0xcf))
-    var v = msg.vU64
-    bigEndian64(addr(buf.p[buf.pos]), addr(v))
-    buf.pos += 8
+    buf.appendBe64(cast[b64](msg.vU64))
   of mkFixStr:
     echo "fixstr"
     let sz: int = len(msg.vFixStr)

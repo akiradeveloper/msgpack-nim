@@ -65,5 +65,5 @@ instance Arbitrary Msg where
         return $ MsgFixStr $ randStr n
   
 main = do
-  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
+  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..3000]] :: IO [Msg]
   forM_ msges (\msg -> print $ msg)
