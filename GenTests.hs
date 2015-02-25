@@ -15,17 +15,25 @@ data Msg =
   | MsgU32 Int
   | MsgU64 Word
   | MsgFixStr String
+  | MsgFixMap [(Msg, Msg)]
+
+arrayShow :: [Msg] -> String
+arrayShow xs = intercalate "," $ map msgShow xs
+
+mapShow :: [(Msg, Msg)] -> String
+mapShow xs = intercalate "," $ map (\(k, v) -> "(" ++ msgShow k ++ "," ++  msgShow v ++ ")") xs
 
 msgShow MsgNil = "Nil()"
 msgShow MsgFalse = "False()"
 msgShow MsgTrue = "True()"
-msgShow (MsgFixArray xs) = "FixArray(@[" ++ (intercalate "," $ map msgShow xs) ++ "])"
+msgShow (MsgFixArray xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
 msgShow (MsgPFixNum n) = "PFixNum(" ++ show n ++ "'u8)"
 msgShow (MsgNFixNum n) = "NFixNum(" ++ show n ++ "'u8)"
 msgShow (MsgU16 n) = "U16(" ++ show n ++ "'u16)"
 msgShow (MsgU32 n) = "U32(" ++ show n ++ "'u32)"
 msgShow (MsgU64 n) = "U64(" ++ show n ++ "'u64)"
 msgShow (MsgFixStr s) = "FixStr(" ++ show s ++ ")"
+msgShow (MsgFixMap xs) = "Fixmap(@[" ++ mapShow xs ++ "])"
 
 instance Show Msg where
   show = msgShow
