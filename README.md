@@ -27,12 +27,16 @@ Checklist:
 * ext 8  
 * ext 16  
 * ext 32  
-* float 32  
+* ~~float 32~~  
 * float 64  
 * uint 8  
 * ~~uint 16~~  
 * ~~uint 32~~  
 * ~~uint 64~~  
+* int8  
+* int16  
+* int32  
+* int64  
 * fixext 1  
 * fixext 2  
 * fixext 4  

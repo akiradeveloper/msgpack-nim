@@ -21,6 +21,7 @@ type
     mkU32
     mkU64
     mkFixStr
+    mkFloat32
   Msg = ref MsgObj
   MsgObj = object
     case kind: MsgKind
@@ -35,6 +36,7 @@ type
     of mkU32: vU32: uint32
     of mkU64: vU64: uint64
     of mkFixStr: vFixStr: string
+    of mkFloat32: vFloat32: float32
 
 proc `$`(msg: Msg): string =
   $(msg[])
@@ -72,6 +74,9 @@ proc FixStr*(v: string): Msg =
 
 proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
   Msg(kind: mkFixMap, vFixMap: v)
+
+proc Float32*(v: float32): Msg =
+  Msg(kind: mkFloat32, vFloat32: v)
 
 type b8 = int8
 type b16 = int16
@@ -169,6 +174,13 @@ proc pack(pc: Packer, msg: Msg) =
       let (k, v) = e
       pc.pack(k)
       pc.pack(v)
+  of mkFloat32:
+    echo "float32"
+    buf.ensureMore(1+4)
+    buf.appendBe8(cast[b8](0xca))
+    var v = msg.vFloat32
+    bigEndian32(addr(buf.p[buf.pos]), addr(v))
+    buf.pos += 4
 
 type UnpackBuf = ref object
   p: pointer
@@ -288,6 +300,9 @@ proc unpack(upc: Unpacker): Msg =
     copyMem(addr(s[0]), buf.p, sz)
     buf.inc(sz)
     FixStr(s)
+  of 0xca:
+    echo "float32"
+    Float32(cast[float32](buf.popBe32))
   else:
     assert(false) # not reachable
     Nil()
@@ -329,3 +344,4 @@ when isMainModule:
   t(U64(10000))
   t(FixStr("akiradeveloper"))
   t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
+  t(Float32(0.12345'f32))
