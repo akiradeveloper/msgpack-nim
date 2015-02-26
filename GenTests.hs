@@ -25,6 +25,7 @@ arrayShow xs = intercalate "," $ map msgShow xs
 mapShow :: [(Msg, Msg)] -> String
 mapShow xs = intercalate "," $ map (\(k, v) -> "(" ++ msgShow k ++ "," ++  msgShow v ++ ")") xs
 
+msgShow :: Msg -> String
 msgShow MsgNil = "Nil()"
 msgShow MsgFalse = "False()"
 msgShow MsgTrue = "True()"
@@ -42,9 +43,11 @@ msgShow (MsgFloat64 n) = "Float64(" ++ show n ++ ")"
 instance Show Msg where
   show = msgShow
 
--- FIXME
-randStr :: Int -> String
-randStr n = map (\x -> 'a') [1..n]
+randStr:: Int -> Gen String
+randStr n = sequence [choose ('a', 'Z') | _ <- [1..n]]
+
+randBinSeq :: Int -> Gen String
+randBinSeq n = liftM (\x -> "b8(" ++ show x ++ ")") $ sequence [arbitrary :: Gen Word8 | _ <- [1..n]]
 
 instance Arbitrary Msg where 
   arbitrary = do
@@ -74,7 +77,8 @@ instance Arbitrary Msg where
         return $ MsgU64 n
       10 -> do
         n <- choose (0, 31) :: Gen Int
-        return $ MsgFixStr $ randStr n
+        s <- randStr n
+        return $ MsgFixStr $ s
       11 -> do
         n <- arbitrary :: Gen Float
         return $ MsgFloat32 n
