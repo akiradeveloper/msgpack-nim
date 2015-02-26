@@ -234,7 +234,7 @@ proc pack(pc: Packer, msg: Msg) =
     let sz = len(msg.vExt32)
     buf.ensureMore(1+4+1+sz)
     buf.appendBe8(cast[b8](0xc9))
-    buf.appendBe32(cast[b32](sz))
+    buf.appendBe32(cast[b32](sz.toU32))
     buf.appendBe8(cast[b8](msg.typeExt32))
     var m = msg
     buf.appendData(addr(m.vExt32[0]), sz)
@@ -243,7 +243,7 @@ proc pack(pc: Packer, msg: Msg) =
     let sz = len(msg.vBin8)
     buf.ensureMore(1+1+sz)
     buf.appendBe8(cast[b8](0xc4))
-    buf.appendBe32(cast[b32](sz))
+    buf.appendBe8(cast[b8](sz.toU8))
     var m = msg
     buf.appendData(addr(m.vBin8[0]), sz)
 
@@ -300,6 +300,10 @@ proc popBe32(buf): auto =
 proc popBe64(buf): auto =
   result = fromBe64(buf.p)
   buf.inc(8)
+
+proc popData(buf: UnpackBuf, p: pointer, size: int) =
+  copyMem(p, buf.p, size)
+  buf.inc(size)
 
 type Unpacker = ref object
   buf: UnpackBuf
@@ -383,13 +387,13 @@ proc unpack(upc: Unpacker): Msg =
     let sz = cast[uint32](buf.popBe32)
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[b8](sz.int)
-    copyMem(addr(d[0]), buf.p, sz.int)
+    buf.popData(addr(d[0]), sz.int)
     Ext32(t, d)
   of 0xc4:
     echo "bin8"
-    let sz = cast[uint32](buf.popBe32)
+    let sz = cast[uint8](buf.popBe8)
     var d = newSeq[b8](sz.int)
-    copyMem(addr(d[0]), buf.p, sz.int)
+    buf.popData(addr(d[0]), sz.int)
     Bin8(d)
   else:
     assert(false) # not reachable

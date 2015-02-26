@@ -59,7 +59,7 @@ instance Arbitrary Msg where
       2 -> return MsgFalse
       3 -> return MsgTrue
       4 -> do
-        l <- choose (1, 5) :: Gen Int
+        l <- choose (1, 7) :: Gen Int
         list <- sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
         return $ MsgFixArray list
       5 -> do
