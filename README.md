@@ -26,7 +26,7 @@ Checklist:
 * bin 32  
 * ext 8  
 * ext 16  
-* ext 32  
+* ~~ext 32~~  
 * ~~float 32~~  
 * float 64  
 * uint 8  

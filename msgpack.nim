@@ -9,6 +9,12 @@ import endians
 import unsigned
 
 type
+ b8  = int8
+ b16 = int16
+ b32 = int32
+ b64 = int64
+
+type
   MsgKind = enum
     mkNil
     mkFalse
@@ -22,6 +28,7 @@ type
     mkU64
     mkFixStr
     mkFloat32
+    mkExt32
   Msg = ref MsgObj
   MsgObj = object
     case kind: MsgKind
@@ -37,6 +44,9 @@ type
     of mkU64: vU64: uint64
     of mkFixStr: vFixStr: string
     of mkFloat32: vFloat32: float32
+    of mkExt32:
+      typeExt32: uint8
+      vExt32: seq[b8]
 
 proc `$`(msg: Msg): string =
   $(msg[])
@@ -78,10 +88,9 @@ proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
 proc Float32*(v: float32): Msg =
   Msg(kind: mkFloat32, vFloat32: v)
 
-type b8 = int8
-type b16 = int16
-type b32 = int32
-type b64 = int64
+proc Ext32*(t: uint8, data: seq[b8]): Msg =
+  Msg(kind: mkExt32, typeExt32: t, vExt32: data)
+
 type PackBuf = ref object
   p: seq[b8]
   pos: int
@@ -190,6 +199,15 @@ proc pack(pc: Packer, msg: Msg) =
     var v = msg.vFloat32
     bigEndian32(addr(buf.p[buf.pos]), addr(v))
     buf.pos += 4
+  of mkExt32:
+    echo "ext32"
+    let sz = len(msg.vExt32)
+    buf.ensureMore(1+4+1+sz)
+    buf.appendBe8(cast[b8](0xc9))
+    buf.appendBe32(cast[b32](sz))
+    buf.appendBe8(cast[b8](msg.typeExt32))
+    var m = msg
+    copyMem(addr(buf.p[buf.pos]), addr(m.vExt32[0]), sz)
 
 type UnpackBuf = ref object
   p: pointer
@@ -312,6 +330,13 @@ proc unpack(upc: Unpacker): Msg =
   of 0xca:
     echo "float32"
     Float32(cast[float32](buf.popBe32))
+  of 0xc9:
+    echo "ext32"
+    let sz = cast[uint32](buf.popBe32)
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[b8](sz.int)
+    copyMem(addr(d[0]), buf.p, sz.int)
+    Ext32(t, d)
   else:
     assert(false) # not reachable
     Nil()
@@ -354,3 +379,4 @@ when isMainModule:
   t(FixStr("akiradeveloper"))
   t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
   t(Float32(0.12345'f32))
+  t(Ext32(12, @[cast[b8](1),2,3]))
