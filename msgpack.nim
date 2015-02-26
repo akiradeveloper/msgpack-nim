@@ -30,6 +30,7 @@ type
     mkFloat32
     mkFloat64
     mkExt32
+    mkBin8
   Msg = ref MsgObj
   MsgObj = object
     case kind: MsgKind
@@ -46,6 +47,7 @@ type
     of mkFixStr: vFixStr: string
     of mkFloat32: vFloat32: float32
     of mkFloat64: vFloat64: float64
+    of mkBin8: vBin8: seq[b8]
     of mkExt32:
       typeExt32: uint8
       vExt32: seq[b8]
@@ -95,6 +97,9 @@ proc Float64*(v: float64): Msg =
 
 proc Ext32*(t: uint8, data: seq[b8]): Msg =
   Msg(kind: mkExt32, typeExt32: t, vExt32: data)
+
+proc Bin8*(v: seq[b8]): Msg =
+  Msg(kind: mkBin8, vBin8: v)
 
 type PackBuf = ref object
   p: seq[b8]
@@ -187,6 +192,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[b8](h.toU8))
     var m = msg
     copyMem(addr(buf.p[buf.pos]), addr(m.vFixStr[0]), sz)
+    buf.pos += sz
   of mkFixMap:
     echo "fixmap"
     let sz = len(msg.vFixMap)
@@ -220,6 +226,14 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[b8](msg.typeExt32))
     var m = msg
     copyMem(addr(buf.p[buf.pos]), addr(m.vExt32[0]), sz)
+  of mkBin8:
+    echo "bin8"
+    let sz = len(msg.vBin8)
+    buf.ensureMore(1+1+sz)
+    buf.appendBe8(cast[b8](0xc4))
+    buf.appendBe32(cast[b32](sz))
+    var m = msg
+    copyMem(addr(buf.p[buf.pos]), addr(m.vBin8[0]), sz)
 
 type UnpackBuf = ref object
   p: pointer
@@ -352,6 +366,12 @@ proc unpack(upc: Unpacker): Msg =
     var d = newSeq[b8](sz.int)
     copyMem(addr(d[0]), buf.p, sz.int)
     Ext32(t, d)
+  of 0xc4:
+    echo "bin8"
+    let sz = cast[uint32](buf.popBe32)
+    var d = newSeq[b8](sz.int)
+    copyMem(addr(d[0]), buf.p, sz.int)
+    Bin8(d)
   else:
     assert(false) # not reachable
     Nil()
@@ -396,3 +416,4 @@ when isMainModule:
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
   t(Ext32(12, @[cast[b8](1),2,3]))
+  t(Bin8(@[cast[b8](4),5,6]))
