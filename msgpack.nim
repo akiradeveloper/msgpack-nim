@@ -210,16 +210,12 @@ proc pack(pc: Packer, msg: Msg) =
     echo "float32"
     buf.ensureMore(1+4)
     buf.appendBe8(cast[b8](0xca))
-    var v = msg.vFloat32
-    bigEndian32(addr(buf.p[buf.pos]), addr(v))
-    buf.pos += 4
+    buf.appendBe32(cast[b32](msg.vFloat32))
   of mkFloat64:
     echo "float64"
     buf.ensureMore(1+8)
     buf.appendBe8(cast[b8](0xcb))
-    var v = msg.vFloat64
-    bigEndian64(addr(buf.p[buf.pos]), addr(v))
-    buf.pos += 8
+    buf.appendBe64(cast[b64](msg.vFloat64))
   of mkExt32:
     echo "ext32"
     let sz = len(msg.vExt32)
