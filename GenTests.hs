@@ -16,6 +16,8 @@ data Msg =
   | MsgU64 Word
   | MsgFixStr String
   | MsgFixMap [(Msg, Msg)]
+  | MsgFloat32 Float
+  | MsgFloat64 Double
 
 arrayShow :: [Msg] -> String
 arrayShow xs = intercalate "," $ map msgShow xs
@@ -34,6 +36,8 @@ msgShow (MsgU32 n) = "U32(" ++ show n ++ "'u32)"
 msgShow (MsgU64 n) = "U64(" ++ show n ++ "'u64)"
 msgShow (MsgFixStr s) = "FixStr(" ++ show s ++ ")"
 msgShow (MsgFixMap xs) = "Fixmap(@[" ++ mapShow xs ++ "])"
+msgShow (MsgFloat32 n) = "Float32(" ++ show n ++ ")"
+msgShow (MsgFloat64 n) = "Float64(" ++ show n ++ ")"
 
 instance Show Msg where
   show = msgShow
@@ -44,7 +48,7 @@ randStr n = map (\x -> 'a') [1..n]
 
 instance Arbitrary Msg where 
   arbitrary = do
-    n <- choose (1, 10) :: Gen Int
+    n <- choose (1, 12) :: Gen Int
     case n of
       1 -> return MsgNil
       2 -> return MsgFalse
@@ -71,7 +75,13 @@ instance Arbitrary Msg where
       10 -> do
         n <- choose (0, 31) :: Gen Int
         return $ MsgFixStr $ randStr n
+      11 -> do
+        n <- arbitrary :: Gen Float
+        return $ MsgFloat32 n
+      12 -> do
+        n <- arbitrary :: Gen Double
+        return $ MsgFloat64 n
   
 main = do
-  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..3000]] :: IO [Msg]
+  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
   forM_ msges (\msg -> print $ msg)

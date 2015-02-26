@@ -28,7 +28,7 @@ Checklist:
 * ext 16  
 * ~~ext 32~~  
 * ~~float 32~~  
-* float 64  
+* ~~float 64~~  
 * uint 8  
 * ~~uint 16~~  
 * ~~uint 32~~  

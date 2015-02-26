@@ -28,6 +28,7 @@ type
     mkU64
     mkFixStr
     mkFloat32
+    mkFloat64
     mkExt32
   Msg = ref MsgObj
   MsgObj = object
@@ -44,6 +45,7 @@ type
     of mkU64: vU64: uint64
     of mkFixStr: vFixStr: string
     of mkFloat32: vFloat32: float32
+    of mkFloat64: vFloat64: float64
     of mkExt32:
       typeExt32: uint8
       vExt32: seq[b8]
@@ -87,6 +89,9 @@ proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
 
 proc Float32*(v: float32): Msg =
   Msg(kind: mkFloat32, vFloat32: v)
+
+proc Float64*(v: float64): Msg =
+  Msg(kind: mkFloat64, vFloat64: v)
 
 proc Ext32*(t: uint8, data: seq[b8]): Msg =
   Msg(kind: mkExt32, typeExt32: t, vExt32: data)
@@ -199,6 +204,13 @@ proc pack(pc: Packer, msg: Msg) =
     var v = msg.vFloat32
     bigEndian32(addr(buf.p[buf.pos]), addr(v))
     buf.pos += 4
+  of mkFloat64:
+    echo "float64"
+    buf.ensureMore(1+8)
+    buf.appendBe8(cast[b8](0xcb))
+    var v = msg.vFloat64
+    bigEndian64(addr(buf.p[buf.pos]), addr(v))
+    buf.pos += 8
   of mkExt32:
     echo "ext32"
     let sz = len(msg.vExt32)
@@ -330,6 +342,9 @@ proc unpack(upc: Unpacker): Msg =
   of 0xca:
     echo "float32"
     Float32(cast[float32](buf.popBe32))
+  of 0xcb:
+    echo "float64"
+    Float64(cast[float64](buf.popBe64))
   of 0xc9:
     echo "ext32"
     let sz = cast[uint32](buf.popBe32)
@@ -379,4 +394,5 @@ when isMainModule:
   t(FixStr("akiradeveloper"))
   t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
   t(Float32(0.12345'f32))
+  t(Float64(0.78901'f64))
   t(Ext32(12, @[cast[b8](1),2,3]))
