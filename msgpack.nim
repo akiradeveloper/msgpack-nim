@@ -20,6 +20,7 @@ type
     mkFalse
     mkTrue
     mkFixArray
+    mkArray16
     mkFixMap
     mkPFixNum
     mkNFixNum
@@ -38,6 +39,7 @@ type
     of mkFalse: nil
     of mkTrue: nil
     of mkFixArray: vFixArray: seq[Msg]
+    of mkArray16: vArray16: seq[Msg]
     of mkFixMap: vFixMap: seq[tuple[key:Msg, val:Msg]]
     of mkPFixNum: vPFixNum: uint8
     of mkNFixNum: vNFixNum: uint8
@@ -66,6 +68,9 @@ proc True*(): Msg =
 
 proc FixArray*(v: seq[Msg]): Msg =
   Msg(kind: mkFixArray, vFixArray: v)
+
+proc Array16*(v: seq[Msg]): Msg =
+  Msg(kind: mkArray16, vArray16: v)
 
 proc PFixNum*(v: uint8): Msg =
   Msg(kind: mkPFixNum, vPFixNum: v)
@@ -162,6 +167,14 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1)
     buf.appendBe8(cast[b8](h.toU8))
     for e in msg.vFixArray:
+      pc.pack(e)
+  of mkArray16:
+    echo "array16"
+    let sz = len(msg.vArray16)
+    buf.ensureMore(3)
+    buf.appendBe8(cast[b8](0xdc))
+    buf.appendBe16(cast[b16](sz.toU16))
+    for e in msg.vArray16:
       pc.pack(e)
   of mkPFixNum:
     echo "pfixnum"
@@ -319,6 +332,13 @@ proc unpack(upc: Unpacker): Msg =
     for i in 0..(sz-1):
       v.add(upc.unpack())
     FixArray(v)
+  of 0xdc:
+    echo "array16"
+    let sz = cast[uint16](buf.popBe16)
+    var v: seq[Msg] = @[]
+    for i in 0..(sz-1):
+      v.add(upc.unpack())
+    Array16(v)
   of 0x80..0x8f:
     echo "fixmap"
     let sz: int = h and 0x0f
@@ -405,6 +425,7 @@ when isMainModule:
   t(False())
   t(True())
   t(FixArray(@[True(), False()]))
+  t(Array16(@[True(), False()]))
   t(PFixNum(127))
   t(NFixNum(31))
   t(U16(10000))

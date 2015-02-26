@@ -21,7 +21,7 @@ Checklist:
 * ~~nil~~  
 * ~~false~~  
 * ~~true~~  
-* bin 8  
+* ~~bin 8~~  
 * bin 16  
 * bin 32  
 * ext 8  
@@ -45,7 +45,7 @@ Checklist:
 * str 8  
 * str 16  
 * str 32  
-* array 16  
+* ~~array 16~~  
 * array 32  
 * map 16  
 * map 32  
