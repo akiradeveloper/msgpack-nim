@@ -195,8 +195,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+sz)
     buf.appendBe8(cast[b8](h.toU8))
     var m = msg
-    copyMem(addr(buf.p[buf.pos]), addr(m.vFixStr[0]), sz)
-    buf.pos += sz
+    buf.appendData(addr(m.vFixStr[0]), sz)
   of mkFixMap:
     echo "fixmap"
     let sz = len(msg.vFixMap)
@@ -229,8 +228,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe32(cast[b32](sz))
     buf.appendBe8(cast[b8](msg.typeExt32))
     var m = msg
-    copyMem(addr(buf.p[buf.pos]), addr(m.vExt32[0]), sz)
-    buf.pos += sz
+    buf.appendData(addr(m.vExt32[0]), sz)
   of mkBin8:
     echo "bin8"
     let sz = len(msg.vBin8)
@@ -238,8 +236,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[b8](0xc4))
     buf.appendBe32(cast[b32](sz))
     var m = msg
-    copyMem(addr(buf.p[buf.pos]), addr(m.vBin8[0]), sz)
-    buf.pos += sz
+    buf.appendData(addr(m.vBin8[0]), sz)
 
 type UnpackBuf = ref object
   p: pointer
