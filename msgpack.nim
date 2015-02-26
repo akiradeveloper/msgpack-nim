@@ -30,6 +30,7 @@ type
     mkFixStr
     mkFloat32
     mkFloat64
+    mkFixExt1
     mkExt32
     mkBin8
   Msg = ref MsgObj
@@ -53,6 +54,9 @@ type
     of mkExt32:
       typeExt32: uint8
       vExt32: seq[b8]
+    of mkFixExt1:
+      typeFixExt1: uint8
+      vFixExt1: seq[b8] # should be array[1, b8]
 
 proc `$`(msg: Msg): string =
   $(msg[])
@@ -99,6 +103,9 @@ proc Float32*(v: float32): Msg =
 
 proc Float64*(v: float64): Msg =
   Msg(kind: mkFloat64, vFloat64: v)
+
+proc FixExt1*(t: uint8, data: seq[b8]): Msg =
+  Msg(kind: mkFixExt1, typeFixExt1: t, vFixExt1: data)
 
 proc Ext32*(t: uint8, data: seq[b8]): Msg =
   Msg(kind: mkExt32, typeExt32: t, vExt32: data)
@@ -246,6 +253,13 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[b8](sz.toU8))
     var m = msg
     buf.appendData(addr(m.vBin8[0]), sz)
+  of mkFixExt1:
+    echo "fixext1"
+    buf.ensureMore(3)
+    buf.appendBe8(cast[b8](0xd4))
+    buf.appendBe8(cast[b8](msg.typeFixExt1))
+    var m = msg
+    buf.appendData(addr(m.vFixExt1[0]), 1)
 
 type UnpackBuf = ref object
   p: pointer
