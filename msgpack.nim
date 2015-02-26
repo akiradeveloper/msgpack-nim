@@ -9,7 +9,7 @@ import endians
 import unsigned
 
 type
- b8  = int8
+ b8*  = int8
  b16 = int16
  b32 = int32
  b64 = int64
