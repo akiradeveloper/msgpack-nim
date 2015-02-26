@@ -129,6 +129,10 @@ proc appendBe64(buf: PackBuf, v: b64) =
   bigEndian64(addr(buf.p[buf.pos]), addr(vv))
   buf.pos += 8
 
+proc appendData(buf: PackBuf, p: pointer, size: int) =
+  copyMem(addr(buf.p[buf.pos]), p, size)
+  buf.pos += size
+
 type Packer = ref object
   buf: PackBuf
 
@@ -226,6 +230,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[b8](msg.typeExt32))
     var m = msg
     copyMem(addr(buf.p[buf.pos]), addr(m.vExt32[0]), sz)
+    buf.pos += sz
   of mkBin8:
     echo "bin8"
     let sz = len(msg.vBin8)
@@ -234,6 +239,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe32(cast[b32](sz))
     var m = msg
     copyMem(addr(buf.p[buf.pos]), addr(m.vBin8[0]), sz)
+    buf.pos += sz
 
 type UnpackBuf = ref object
   p: pointer
