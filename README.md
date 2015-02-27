@@ -46,7 +46,7 @@ Checklist:
 * str 16  
 * ~~str 32~~  
 * ~~array 16~~  
-* array 32  
+* ~~array 32~~  
 * ~~map 16~~  
 * ~~map 32~~  
 * ~~negative fixint~~  
