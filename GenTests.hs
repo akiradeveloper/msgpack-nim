@@ -62,41 +62,29 @@ instance Arbitrary Msg where
       3 -> return MsgTrue
       4 -> do
         l <- choose (1, 7) :: Gen Int
-        list <- sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
-        return $ MsgFixArray list
+        liftM MsgFixArray $ sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
       5 -> do
-        liftM MsgPFixNum $ choose (0, (1 `shiftL` 5)-1)
-        -- n <- choose (0, (1 `shiftL` 7)-1) :: Gen Int
-        -- return $ MsgPFixNum n
+        liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1)
       6 -> do
-        n <- choose (0, (1 `shiftL` 5)-1) :: Gen Int
-        return $ MsgNFixNum n
+        liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1)
       7 -> do
-        n <- choose (0, (1 `shiftL` 16)-1) :: Gen Int
-        return $ MsgU16 n
+        liftM MsgU16 $ choose (0, (1 `shiftL` 16)-1)
       8 -> do
-        n <- choose (0, (1 `shiftL` 32)-1) :: Gen Int
-        return $ MsgU32 n
+        liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1)
       9 -> do
-        n <- choose (0, (1 `shiftL` 63)-1) :: Gen Word
-        return $ MsgU64 n
+        liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1)
       10 -> do
         n <- choose (0, 31) :: Gen Int
-        s <- randStr n
-        return $ MsgFixStr $ s
+        liftM MsgFixStr $ randStr n
       11 -> do
-        n <- arbitrary :: Gen Float
-        return $ MsgFloat32 n
+        liftM MsgFloat32 $ arbitrary
       12 -> do
-        n <- arbitrary :: Gen Double
-        return $ MsgFloat64 n
+        liftM MsgFloat64 $ arbitrary
       13 -> do
         n <- choose (0, 10) :: Gen Word8
-        s <- randBinSeq $ (fromIntegral n)
-        return $ MsgBin8 s
+        liftM MsgBin8 $ randBinSeq (fromIntegral n)
       14 -> do
-        n <- choose (0, (1 `shiftL` 8)-1) :: Gen Int
-        return $ MsgU8 n
+        liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1)
 
 main = do
   msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
