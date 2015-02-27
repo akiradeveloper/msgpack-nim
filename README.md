@@ -29,7 +29,7 @@ Checklist:
 * ~~ext 32~~  
 * ~~float 32~~  
 * ~~float 64~~  
-* uint 8  
+* ~~uint 8~~  
 * ~~uint 16~~  
 * ~~uint 32~~  
 * ~~uint 64~~  
@@ -42,8 +42,8 @@ Checklist:
 * fixext 4  
 * fixext 8  
 * fixext 16  
-* str 8  
-* str 16  
+* ~~str 8~~  
+* ~~str 16~~  
 * ~~str 32~~  
 * ~~array 16~~  
 * ~~array 32~~  

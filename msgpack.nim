@@ -27,6 +27,7 @@ type
     mkMap32
     mkPFixNum
     mkNFixNum
+    mkU8
     mkU16
     mkU32
     mkU64
@@ -53,6 +54,7 @@ type
     of mkMap32: vMap32: seq[tuple[key:Msg, val:Msg]]
     of mkPFixNum: vPFixNum: uint8
     of mkNFixNum: vNFixNum: uint8
+    of mkU8: vU8: uint8
     of mkU16: vU16: uint16
     of mkU32: vU32: uint32
     of mkU64: vU64: uint64
@@ -116,6 +118,9 @@ proc PFixNum*(v: uint8): Msg =
 proc NFixNum*(v: uint8): Msg =
   assert(v < 32)
   Msg(kind: mkNFixNum, vNFixNum: v)
+
+proc U8*(v: uint8): Msg =
+  Msg(kind: mkU8, vU8: v)
 
 proc U16*(v: uint16): Msg =
   Msg(kind: mkU16, vU16: v)
@@ -275,6 +280,11 @@ proc pack(pc: Packer, msg: Msg) =
     let h: int = 0xe0 or msg.vNFixNum.int
     buf.ensureMore(1)
     buf.appendHeader(h)
+  of mkU8:
+    echo "u8"
+    buf.ensureMore(1+1)
+    buf.appendHeader(0xcc)
+    buf.appendBe8(cast[b8](msg.vU8))
   of mkU16:
     echo "u16"
     buf.ensureMore(1+2)
@@ -501,6 +511,9 @@ proc unpack(upc: Unpacker): Msg =
     echo "nfixnum"
     let v: int = h and 0x1f
     NFixNum(cast[uint8](v.toU8))
+  of 0xcc:
+    echo "u8"
+    U8(cast[uint8](buf.popBe8))
   of 0xcd:
     echo "u16"
     U16(cast[uint16](buf.popBe16))
@@ -573,6 +586,7 @@ when isMainModule:
   t(Array32(@[True(), False()]))
   t(PFixNum(127))
   t(NFixNum(31))
+  t(U16(255))
   t(U16(10000))
   t(U32(10000))
   t(U64(10000))
