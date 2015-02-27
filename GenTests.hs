@@ -11,6 +11,7 @@ data Msg =
   | MsgFixArray [Msg]
   | MsgPFixNum Int
   | MsgNFixNum Int
+  | MsgU8 Int
   | MsgU16 Int
   | MsgU32 Int
   | MsgU64 Word
@@ -33,6 +34,7 @@ msgShow MsgTrue = "True()"
 msgShow (MsgFixArray xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
 msgShow (MsgPFixNum n) = "PFixNum(" ++ show n ++ "'u8)"
 msgShow (MsgNFixNum n) = "NFixNum(" ++ show n ++ "'u8)"
+msgShow (MsgU8 n) = "U8(" ++ show n ++ "'u8)"
 msgShow (MsgU16 n) = "U16(" ++ show n ++ "'u16)"
 msgShow (MsgU32 n) = "U32(" ++ show n ++ "'u32)"
 msgShow (MsgU64 n) = "U64(" ++ show n ++ "'u64)"
@@ -53,7 +55,7 @@ randBinSeq n = sequence [choose (0, 255) | _ <- [1..n]]
 
 instance Arbitrary Msg where 
   arbitrary = do
-    n <- choose (1, 13) :: Gen Int
+    n <- choose (1, 14) :: Gen Int
     case n of
       1 -> return MsgNil
       2 -> return MsgFalse
@@ -63,8 +65,9 @@ instance Arbitrary Msg where
         list <- sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
         return $ MsgFixArray list
       5 -> do
-        n <- choose (0, (1 `shiftL` 7)-1) :: Gen Int
-        return $ MsgPFixNum n
+        liftM MsgPFixNum $ choose (0, (1 `shiftL` 5)-1)
+        -- n <- choose (0, (1 `shiftL` 7)-1) :: Gen Int
+        -- return $ MsgPFixNum n
       6 -> do
         n <- choose (0, (1 `shiftL` 5)-1) :: Gen Int
         return $ MsgNFixNum n
@@ -91,6 +94,9 @@ instance Arbitrary Msg where
         n <- choose (0, 10) :: Gen Word8
         s <- randBinSeq $ (fromIntegral n)
         return $ MsgBin8 s
+      14 -> do
+        n <- choose (0, (1 `shiftL` 8)-1) :: Gen Int
+        return $ MsgU8 n
 
 main = do
   msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
