@@ -71,8 +71,7 @@ instance Arbitrary Msg where
       , liftM MsgU16 $ choose (0, (1 `shiftL` 16)-1)
       , liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1)
       , liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1)
-      , do n <- choose (0, 31) :: Gen Int
-           liftM MsgFixStr $ randStr n
+      , liftM MsgFixStr $ choose (0, 31) >>= randStr
       , liftM MsgFloat32 $ arbitrary
       , liftM MsgFloat64 $ arbitrary
       , liftM MsgBin8 $ choose (0, 10) >>= randBinSeq
