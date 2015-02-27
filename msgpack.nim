@@ -94,14 +94,10 @@ proc Str16*(s: string): Msg =
 proc Str32*(s: string): Msg =
   Msg(kind: mkStr32, vStr32: s)
 
-proc Nil*(): Msg =
-  Msg(kind: mkNil)
-
-proc False*(): Msg =
-  Msg(kind: mkFalse)
-
-proc True*(): Msg =
-  Msg(kind: mkTrue)
+let
+  Nil*: Msg = Msg(kind: mkNil)
+  False*: Msg = Msg(kind: mkFalse)
+  True*: Msg = Msg(kind: mkTrue)
 
 proc FixArray*(v: seq[Msg]): Msg =
   assert(len(v) < 16)
@@ -500,13 +496,13 @@ proc unpack(upc: Unpacker): Msg =
     Str32(s)
   of 0xc0:
     echo "nil"
-    Nil()
+    Nil
   of 0xc2:
     echo "false"
-    False()
+    False
   of 0xc3:
     echo "true"
-    True()
+    True
   of 0x90..0x9f: # uint8
     echo "fixarray"
     let sz: int = h and 0x0f
@@ -590,7 +586,7 @@ proc unpack(upc: Unpacker): Msg =
     Bin32(d)
   else:
     assert(false) # not reachable
-    Nil()
+    Nil
 
 # At the initial release we won't open interfaces
 # other than the followings.
@@ -618,12 +614,12 @@ proc t*(msg: Msg) =
   assert($expr(msg) == $expr(unpacked))
 
 when isMainModule:
-  t(Nil())
-  t(False())
-  t(True())
-  t(FixArray(@[True(), False()]))
-  t(Array16(@[True(), False()]))
-  t(Array32(@[True(), False()]))
+  t(Nil)
+  t(False)
+  t(True)
+  t(FixArray(@[True, False]))
+  t(Array16(@[True, False]))
+  t(Array32(@[True, False]))
   t(PFixNum(127))
   t(NFixNum(31))
   t(U16(255))
@@ -634,9 +630,9 @@ when isMainModule:
   t(Str8("akiradeveloper"))
   t(Str16("akiradeveloper"))
   t(Str32("akiradeveloper"))
-  t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
-  t(Map16(@[(Nil(),True()),(False(),U16(1))]))
-  t(Map32(@[(Nil(),True()),(False(),U16(1))]))
+  t(FixMap(@[(Nil,True),(False,U16(1))]))
+  t(Map16(@[(Nil,True),(False,U16(1))]))
+  t(Map32(@[(Nil,True),(False,U16(1))]))
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
   t(Ext32(12, @[cast[b8](1),2,3]))

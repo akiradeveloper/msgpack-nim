@@ -37,9 +37,9 @@ mapShow :: [(Msg, Msg)] -> String
 mapShow xs = intercalate "," $ map (\(k, v) -> "(" ++ msgShow k ++ "," ++  msgShow v ++ ")") xs
 
 msgShow :: Msg -> String
-msgShow MsgNil = "Nil()"
-msgShow MsgFalse = "False()"
-msgShow MsgTrue = "True()"
+msgShow MsgNil = "Nil"
+msgShow MsgFalse = "False"
+msgShow MsgTrue = "True"
 msgShow (MsgFixArray xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
 msgShow (MsgArray16 xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
 msgShow (MsgArray32 xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
