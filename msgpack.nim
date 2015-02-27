@@ -362,6 +362,12 @@ type Unpacker = ref object
   buf: UnpackBuf
 
 proc unpack(upc: Unpacker): Msg
+proc popArray(upc: Unpacker, size: int): seq[Msg] =
+  var v: seq[Msg] = @[]
+  for i in 0..(size-1):
+    v.add(upc.unpack)
+  v
+
 proc popMap(upc: Unpacker, size: int): seq[tuple[key:Msg, val:Msg]] =
   var v: seq[tuple[key: Msg, val:Msg]] = @[]
   for i in 0..(size-1):
@@ -398,17 +404,14 @@ proc unpack(upc: Unpacker): Msg =
   of 0x90..0x9f: # uint8
     echo "fixarray"
     let sz: int = h and 0x0f
-    var v: seq[Msg] = @[]
-    for i in 0..(sz-1):
-      v.add(upc.unpack())
-    FixArray(v)
+    FixArray(upc.popArray(sz))
   of 0xdc:
     echo "array16"
     let sz = cast[uint16](buf.popBe16)
-    var v: seq[Msg] = @[]
-    for i in 0..(sz-1):
-      v.add(upc.unpack())
-    Array16(v)
+    # var v: seq[Msg] = @[]
+    # for i in 0..(sz-1):
+    #   v.add(upc.unpack())
+    Array16(upc.popArray(sz.int))
   of 0x80..0x8f:
     echo "fixmap"
     let sz: int = h and 0x0f
