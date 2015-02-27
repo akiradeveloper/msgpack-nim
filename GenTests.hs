@@ -16,6 +16,9 @@ data Msg =
   | MsgU32 Int
   | MsgU64 Word
   | MsgFixStr String
+  | MsgStr8 String
+  | MsgStr16 String
+  | MsgStr32 String
   | MsgFixMap [(Msg, Msg)]
   | MsgFloat32 Float
   | MsgFloat64 Double
@@ -41,6 +44,9 @@ msgShow (MsgU16 n) = "U16(" ++ show n ++ "'u16)"
 msgShow (MsgU32 n) = "U32(" ++ show n ++ "'u32)"
 msgShow (MsgU64 n) = "U64(" ++ show n ++ "'u64)"
 msgShow (MsgFixStr s) = "FixStr(" ++ show s ++ ")"
+msgShow (MsgStr8 s) = "Str8(" ++ show s ++ ")"
+msgShow (MsgStr16 s) = "Str16(" ++ show s ++ ")"
+msgShow (MsgStr32 s) = "Str32(" ++ show s ++ ")"
 msgShow (MsgFixMap xs) = "Fixmap(@[" ++ mapShow xs ++ "])"
 msgShow (MsgFloat32 n) = "Float32(" ++ show n ++ ")"
 msgShow (MsgFloat64 n) = "Float64(" ++ show n ++ ")"
@@ -72,6 +78,9 @@ instance Arbitrary Msg where
       , liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1)
       , liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1)
       , liftM MsgFixStr $ choose (0, 31) >>= randStr
+      , liftM MsgStr8 $ choose (0, 31) >>= randStr
+      , liftM MsgStr16 $ choose (0, 31) >>= randStr
+      , liftM MsgStr32 $ choose (0, 31) >>= randStr
       , liftM MsgFloat32 $ arbitrary
       , liftM MsgFloat64 $ arbitrary
       , liftM MsgBin8 $ choose (0, 10) >>= randBinSeq
