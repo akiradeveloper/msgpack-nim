@@ -22,6 +22,7 @@ type
     mkFixArray
     mkArray16
     mkFixMap
+    mkMap32
     mkPFixNum
     mkNFixNum
     mkU16
@@ -43,6 +44,7 @@ type
     of mkFixArray: vFixArray: seq[Msg]
     of mkArray16: vArray16: seq[Msg]
     of mkFixMap: vFixMap: seq[tuple[key:Msg, val:Msg]]
+    of mkMap32: vMap32: seq[tuple[key:Msg, val:Msg]]
     of mkPFixNum: vPFixNum: uint8
     of mkNFixNum: vNFixNum: uint8
     of mkU16: vU16: uint16
@@ -62,6 +64,9 @@ type
 
 proc `$`(msg: Msg): string =
   $(msg[])
+
+proc Map32*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
+  Msg(kind: mkMap32, vMap32: v)
 
 proc Str32*(s: string): Msg =
   Msg(kind: mkStr32, vStr32: s)
@@ -247,6 +252,16 @@ proc pack(pc: Packer, msg: Msg) =
       let (k, v) = e
       pc.pack(k)
       pc.pack(v)
+  of mkMap32:
+    echo "map32"
+    let sz = len(msg.vMap32)
+    buf.ensureMore(5)
+    buf.appendBe8(cast[b8](0xdf))
+    buf.appendBe32(cast[b32](sz.toU32))
+    for e in msg.vMap32:
+      let (k, v) = e
+      pc.pack(k)
+      pc.pack(v)
   of mkFloat32:
     echo "float32"
     buf.ensureMore(1+4)
@@ -389,10 +404,15 @@ proc unpack(upc: Unpacker): Msg =
     let sz: int = h and 0x0f
     var v: seq[tuple[key:Msg, val:Msg]] = @[]
     for i in 0..(sz-1):
-      let key = upc.unpack()
-      let val = upc.unpack()
-      v.add((key, val))
+      v.add((upc.unpack, upc.unpack))
     FixMap(v)
+  of 0xdf:
+    echo "map32"
+    let sz: int = cast[int](buf.popBe32)
+    var v: seq[tuple[key:Msg, val:Msg]] = @[]
+    for i in 0..(sz-1):
+      v.add((upc.unpack, upc.unpack))
+    Map32(v)
   of 0x00..0x7f:
     echo "pfixnum"
     let v: int = h and 0x7f
@@ -479,6 +499,7 @@ when isMainModule:
   t(FixStr("akiradeveloper"))
   t(Str32("akiradeveloper"))
   t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
+  t(Map32(@[(Nil(),True()),(False(),U16(1))]))
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
   t(Ext32(12, @[cast[b8](1),2,3]))
