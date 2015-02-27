@@ -144,6 +144,9 @@ proc appendBe8(buf: PackBuf, v: b8) =
   buf.p[buf.pos] = v
   buf.pos += 1
 
+proc appendHeader(buf: PackBuf, v: int) =
+  buf.appendBe8(cast[b8](v))
+
 proc appendBe16(buf: PackBuf, v: b16) =
   var vv = v
   bigEndian16(addr(buf.p[buf.pos]), addr(vv))
@@ -178,34 +181,34 @@ proc pack(pc: Packer, msg: Msg) =
     echo "str32"
     let sz = len(msg.vStr32)
     buf.ensureMore(5 + sz)
-    buf.appendBe8(cast[b8](0xdb))
+    buf.appendHeader(0xdb)
     buf.appendBe32(cast[b32](sz.toU32))
     var m = msg
     buf.appendData(addr(m.vStr32[0]), sz)
   of mkNil:
     echo "nil"
     buf.ensureMore(1)
-    buf.appendBe8(cast[b8](0xc0))
+    buf.appendHeader(0xc0)
   of mkFalse:
     echo "false"
     buf.ensureMore(1)
-    buf.appendBe8(cast[b8](0xc2))
+    buf.appendHeader(0xc2)
   of mkTrue:
     echo "true"
     buf.ensureMore(1)
-    buf.appendBe8(cast[b8](0xc3))
+    buf.appendHeader(0xc3)
   of mkFixArray:
     echo "fixarray"
     let h: int = 0x90 or len(msg.vFixArray)
     buf.ensureMore(1)
-    buf.appendBe8(cast[b8](h.toU8))
+    buf.appendHeader(h)
     for e in msg.vFixArray:
       pc.pack(e)
   of mkArray16:
     echo "array16"
     let sz = len(msg.vArray16)
     buf.ensureMore(3)
-    buf.appendBe8(cast[b8](0xdc))
+    buf.appendHeader(0xdc)
     buf.appendBe16(cast[b16](sz.toU16))
     for e in msg.vArray16:
       pc.pack(e)
@@ -213,33 +216,33 @@ proc pack(pc: Packer, msg: Msg) =
     echo "pfixnum"
     let h: int = 0x7f and msg.vPFixNum.int
     buf.ensureMore(1)
-    buf.appendBe8(cast[b8](h.toU8))
+    buf.appendHeader(h)
   of mkNFixNum:
     echo "nfixnum"
     let h: int = 0xe0 or msg.vNFixNum.int
     buf.ensureMore(1)
-    buf.appendBe8(cast[b8](h.toU8))
+    buf.appendHeader(h)
   of mkU16:
     echo "u16"
     buf.ensureMore(1+2)
-    buf.appendBe8(cast[b8](0xcd))
+    buf.appendHeader(0xcd)
     buf.appendBe16(cast[b16](msg.vU16))
   of mkU32:
     echo "u32"
     buf.ensureMore(1+4)
-    buf.appendBe8(cast[b8](0xce))
+    buf.appendHeader(0xce)
     buf.appendBe32(cast[b32](msg.vU32))
   of mkU64:
     echo "u64"
     buf.ensureMore(1+8)
-    buf.appendBe8(cast[b8](0xcf))
+    buf.appendHeader(0xcf)
     buf.appendBe64(cast[b64](msg.vU64))
   of mkFixStr:
     echo "fixstr"
     let sz: int = len(msg.vFixStr)
     let h = 0xa0 or sz
     buf.ensureMore(1+sz)
-    buf.appendBe8(cast[b8](h.toU8))
+    buf.appendHeader(h)
     var m = msg
     buf.appendData(addr(m.vFixStr[0]), sz)
   of mkFixMap:
@@ -247,7 +250,7 @@ proc pack(pc: Packer, msg: Msg) =
     let sz = len(msg.vFixMap)
     let h = 0x80 or sz
     buf.ensureMore(1)
-    buf.appendBe8(cast[b8](h.toU8))
+    buf.appendHeader(h)
     for e in msg.vFixMap:
       let (k, v) = e
       pc.pack(k)
@@ -256,7 +259,7 @@ proc pack(pc: Packer, msg: Msg) =
     echo "map32"
     let sz = len(msg.vMap32)
     buf.ensureMore(5)
-    buf.appendBe8(cast[b8](0xdf))
+    buf.appendHeader(0xdf)
     buf.appendBe32(cast[b32](sz.toU32))
     for e in msg.vMap32:
       let (k, v) = e
@@ -265,18 +268,18 @@ proc pack(pc: Packer, msg: Msg) =
   of mkFloat32:
     echo "float32"
     buf.ensureMore(1+4)
-    buf.appendBe8(cast[b8](0xca))
+    buf.appendHeader(0xca)
     buf.appendBe32(cast[b32](msg.vFloat32))
   of mkFloat64:
     echo "float64"
     buf.ensureMore(1+8)
-    buf.appendBe8(cast[b8](0xcb))
+    buf.appendHeader(0xcb)
     buf.appendBe64(cast[b64](msg.vFloat64))
   of mkExt32:
     echo "ext32"
     let sz = len(msg.vExt32)
     buf.ensureMore(1+4+1+sz)
-    buf.appendBe8(cast[b8](0xc9))
+    buf.appendHeader(0xc9)
     buf.appendBe32(cast[b32](sz.toU32))
     buf.appendBe8(cast[b8](msg.typeExt32))
     var m = msg
@@ -285,14 +288,14 @@ proc pack(pc: Packer, msg: Msg) =
     echo "bin8"
     let sz = len(msg.vBin8)
     buf.ensureMore(1+1+sz)
-    buf.appendBe8(cast[b8](0xc4))
+    buf.appendHeader(0xc4)
     buf.appendBe8(cast[b8](sz.toU8))
     var m = msg
     buf.appendData(addr(m.vBin8[0]), sz)
   of mkFixExt1:
     echo "fixext1"
     buf.ensureMore(3)
-    buf.appendBe8(cast[b8](0xd4))
+    buf.appendHeader(0xd4)
     buf.appendBe8(cast[b8](msg.typeFixExt1))
     var m = msg
     buf.appendData(addr(m.vFixExt1[0]), 1)
