@@ -9,6 +9,8 @@ data Msg =
   | MsgFalse
   | MsgTrue
   | MsgFixArray [Msg]
+  | MsgArray16 [Msg]
+  | MsgArray32 [Msg]
   | MsgPFixNum Int
   | MsgNFixNum Int
   | MsgU8 Int
@@ -37,6 +39,8 @@ msgShow MsgNil = "Nil()"
 msgShow MsgFalse = "False()"
 msgShow MsgTrue = "True()"
 msgShow (MsgFixArray xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
+msgShow (MsgArray16 xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
+msgShow (MsgArray32 xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
 msgShow (MsgPFixNum n) = "PFixNum(" ++ show n ++ "'u8)"
 msgShow (MsgNFixNum n) = "NFixNum(" ++ show n ++ "'u8)"
 msgShow (MsgU8 n) = "U8(" ++ show n ++ "'u8)"
@@ -57,11 +61,14 @@ msgShow (MsgBin32 xs) = "Bin32(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" 
 instance Show Msg where
   show = msgShow
 
-randStr:: Int -> Gen String
+randStr :: Int -> Gen String
 randStr n = sequence [choose ('a', 'Z') | _ <- [1..n]]
 
 randBinSeq :: Int -> Gen [Int]
 randBinSeq n = sequence [choose (0, 255) | _ <- [1..n]]
+
+randMsg :: Int -> Gen [Msg]
+randMsg n = sequence [arbitrary | _ <- [1..n]]
 
 instance Arbitrary Msg where 
   arbitrary = do
@@ -69,8 +76,9 @@ instance Arbitrary Msg where
         return MsgNil
       , return MsgFalse
       , return MsgTrue
-      , do l <- choose (1, 7) :: Gen Int
-           liftM MsgFixArray $ sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
+      , liftM MsgFixArray $ choose (1, 7) >>= randMsg
+      , liftM MsgArray16 $ choose (1, 7) >>= randMsg
+      , liftM MsgArray32 $ choose (1, 7) >>= randMsg
       , liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1)
       , liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1)
       , liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1)
