@@ -22,6 +22,7 @@ type
     mkFixArray
     mkArray16
     mkFixMap
+    mkMap16
     mkMap32
     mkPFixNum
     mkNFixNum
@@ -44,6 +45,7 @@ type
     of mkFixArray: vFixArray: seq[Msg]
     of mkArray16: vArray16: seq[Msg]
     of mkFixMap: vFixMap: seq[tuple[key:Msg, val:Msg]]
+    of mkMap16: vMap16: seq[tuple[key:Msg, val:Msg]]
     of mkMap32: vMap32: seq[tuple[key:Msg, val:Msg]]
     of mkPFixNum: vPFixNum: uint8
     of mkNFixNum: vNFixNum: uint8
@@ -64,6 +66,9 @@ type
 
 proc `$`(msg: Msg): string =
   $(msg[])
+
+proc Map16*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
+  Msg(kind: mkMap16, vMap16: v)
 
 proc Map32*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
   Msg(kind: mkMap32, vMap32: v)
@@ -261,6 +266,13 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1)
     buf.appendHeader(h)
     pc.appendMap(msg.vFixMap)
+  of mkMap16:
+    echo "map16"
+    let sz = len(msg.vMap16)
+    buf.ensureMore(3)
+    buf.appendHeader(0xde)
+    buf.appendBe16(cast[b16](sz.toU16))
+    pc.appendMap(msg.vMap16)
   of mkMap32:
     echo "map32"
     let sz = len(msg.vMap32)
@@ -366,6 +378,7 @@ type Unpacker = ref object
   buf: UnpackBuf
 
 proc unpack(upc: Unpacker): Msg
+
 proc popArray(upc: Unpacker, size: int): seq[Msg] =
   var v: seq[Msg] = @[]
   for i in 0..(size-1):
@@ -420,6 +433,10 @@ proc unpack(upc: Unpacker): Msg =
     echo "fixmap"
     let sz: int = h and 0x0f
     FixMap(upc.popMap(sz))
+  of 0xde:
+    echo "map16"
+    let sz: int = cast[int](buf.popBe16)
+    Map16(upc.popMap(sz))
   of 0xdf:
     echo "map32"
     let sz: int = cast[int](buf.popBe32)
@@ -509,6 +526,7 @@ when isMainModule:
   t(FixStr("akiradeveloper"))
   t(Str32("akiradeveloper"))
   t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
+  t(Map16(@[(Nil(),True()),(False(),U16(1))]))
   t(Map32(@[(Nil(),True()),(False(),U16(1))]))
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
