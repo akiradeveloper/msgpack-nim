@@ -37,14 +37,14 @@ Checklist:
 * int16  
 * int32  
 * int64  
-* fixext 1  
+* ~~fixext 1~~  
 * fixext 2  
 * fixext 4  
 * fixext 8  
 * fixext 16  
 * str 8  
 * str 16  
-* str 32  
+* ~~str 32~~  
 * ~~array 16~~  
 * array 32  
 * map 16  

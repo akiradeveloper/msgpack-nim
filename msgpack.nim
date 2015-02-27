@@ -28,6 +28,7 @@ type
     mkU32
     mkU64
     mkFixStr
+    mkStr32
     mkFloat32
     mkFloat64
     mkFixExt1
@@ -48,6 +49,7 @@ type
     of mkU32: vU32: uint32
     of mkU64: vU64: uint64
     of mkFixStr: vFixStr: string
+    of mkStr32: vStr32: string
     of mkFloat32: vFloat32: float32
     of mkFloat64: vFloat64: float64
     of mkBin8: vBin8: seq[b8]
@@ -61,6 +63,9 @@ type
 proc `$`(msg: Msg): string =
   $(msg[])
 
+proc Str32*(s: string): Msg =
+  Msg(kind: mkStr32, vStr32: s)
+
 proc Nil*(): Msg =
   Msg(kind: mkNil)
 
@@ -71,15 +76,19 @@ proc True*(): Msg =
   Msg(kind: mkTrue)
 
 proc FixArray*(v: seq[Msg]): Msg =
+  assert(len(v) < 16)
   Msg(kind: mkFixArray, vFixArray: v)
 
 proc Array16*(v: seq[Msg]): Msg =
+  assert(len(v) < (1 shl 16))
   Msg(kind: mkArray16, vArray16: v)
 
 proc PFixNum*(v: uint8): Msg =
+  assert(v < 128)
   Msg(kind: mkPFixNum, vPFixNum: v)
 
 proc NFixNum*(v: uint8): Msg =
+  assert(v < 32)
   Msg(kind: mkNFixNum, vNFixNum: v)
 
 proc U16*(v: uint16): Msg =
@@ -88,14 +97,15 @@ proc U16*(v: uint16): Msg =
 proc U32*(v: uint32): Msg =
   Msg(kind: mkU32, vU32: v)
 
-# should take int64?
 proc U64*(v: uint64): Msg =
   Msg(kind: mkU64, vU64: v)
 
 proc FixStr*(v: string): Msg =
+  assert(len(v) < 32)
   Msg(kind: mkFixStr, vFixStr: v)
 
 proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
+  assert(len(v) < 16)
   Msg(kind: mkFixMap, vFixMap: v)
 
 proc Float32*(v: float32): Msg =
@@ -105,12 +115,15 @@ proc Float64*(v: float64): Msg =
   Msg(kind: mkFloat64, vFloat64: v)
 
 proc FixExt1*(t: uint8, data: seq[b8]): Msg =
+  assert(len(data) == 1)
   Msg(kind: mkFixExt1, typeFixExt1: t, vFixExt1: data)
 
 proc Ext32*(t: uint8, data: seq[b8]): Msg =
+  assert(len(data) < (1 shl 32))
   Msg(kind: mkExt32, typeExt32: t, vExt32: data)
 
 proc Bin8*(v: seq[b8]): Msg =
+  assert(len(v) < (1 shl 8))
   Msg(kind: mkBin8, vBin8: v)
 
 type PackBuf = ref object
@@ -156,6 +169,14 @@ proc mkPacker(buf: PackBuf): Packer =
 proc pack(pc: Packer, msg: Msg) =
   let buf = pc.buf
   case msg.kind:
+  of mkStr32:
+    echo "str32"
+    let sz = len(msg.vStr32)
+    buf.ensureMore(5 + sz)
+    buf.appendBe8(cast[b8](0xdb))
+    buf.appendBe32(cast[b32](sz.toU32))
+    var m = msg
+    buf.appendData(addr(m.vStr32[0]), sz)
   of mkNil:
     echo "nil"
     buf.ensureMore(1)
@@ -334,6 +355,12 @@ proc unpack(upc: Unpacker): Msg =
   echo h.int
 
   case h
+  of 0xdb:
+    echo "str32"
+    let sz = cast[uint32](buf.popBe32)
+    var s = newString(sz.int)
+    buf.popData(addr(s[0]), sz.int)
+    Str32(s)
   of 0xc0:
     echo "nil"
     Nil()
@@ -450,6 +477,7 @@ when isMainModule:
   t(U32(10000))
   t(U64(10000))
   t(FixStr("akiradeveloper"))
+  t(Str32("akiradeveloper"))
   t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
