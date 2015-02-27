@@ -20,6 +20,8 @@ data Msg =
   | MsgFloat32 Float
   | MsgFloat64 Double
   | MsgBin8 [Int]
+  | MsgBin16 [Int]
+  | MsgBin32 [Int]
 
 arrayShow :: [Msg] -> String
 arrayShow xs = intercalate "," $ map msgShow xs
@@ -43,6 +45,8 @@ msgShow (MsgFixMap xs) = "Fixmap(@[" ++ mapShow xs ++ "])"
 msgShow (MsgFloat32 n) = "Float32(" ++ show n ++ ")"
 msgShow (MsgFloat64 n) = "Float64(" ++ show n ++ ")"
 msgShow (MsgBin8 xs) = "Bin8(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" ++ show x ++ ")") xs) ++ "])"
+msgShow (MsgBin16 xs) = "Bin16(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" ++ show x ++ ")") xs) ++ "])"
+msgShow (MsgBin32 xs) = "Bin32(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" ++ show x ++ ")") xs) ++ "])"
 
 instance Show Msg where
   show = msgShow
@@ -71,8 +75,9 @@ instance Arbitrary Msg where
            liftM MsgFixStr $ randStr n
       , liftM MsgFloat32 $ arbitrary
       , liftM MsgFloat64 $ arbitrary
-      , do n <- choose (0, 10) :: Gen Word8
-           liftM MsgBin8 $ randBinSeq (fromIntegral n)
+      , liftM MsgBin8 $ choose (0, 10) >>= randBinSeq
+      , liftM MsgBin16 $ choose (0, 10) >>= randBinSeq
+      , liftM MsgBin32 $ choose (0, 10) >>= randBinSeq
           ]
 main = do
   msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
