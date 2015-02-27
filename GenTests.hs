@@ -80,34 +80,44 @@ randMap n = do
     ys <- randMsg n
     return $ zip xs ys
 
+-- array weight
+aw = 1
+
+-- map weight
+mp = 1
+
+-- value weight
+vw = 3
+
 instance Arbitrary Msg where 
   arbitrary = do
-    oneof [
-        return MsgNil
-      , return MsgFalse
-      , return MsgTrue
-      , liftM MsgFixArray $ choose (1, 7) >>= randMsg
-      , liftM MsgArray16 $ choose (1, 7) >>= randMsg
-      , liftM MsgArray32 $ choose (1, 7) >>= randMsg
-      , liftM MsgFixMap $ choose (1, 5) >>= randMap
-      , liftM MsgMap16 $ choose (1, 5) >>= randMap
-      , liftM MsgMap32 $ choose (1, 5) >>= randMap
-      , liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1)
-      , liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1)
-      , liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1)
-      , liftM MsgU16 $ choose (0, (1 `shiftL` 16)-1)
-      , liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1)
-      , liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1)
-      , liftM MsgFixStr $ choose (0, 31) >>= randStr
-      , liftM MsgStr8 $ choose (0, 31) >>= randStr
-      , liftM MsgStr16 $ choose (0, 31) >>= randStr
-      , liftM MsgStr32 $ choose (0, 31) >>= randStr
-      , liftM MsgFloat32 $ arbitrary
-      , liftM MsgFloat64 $ arbitrary
-      , liftM MsgBin8 $ choose (0, 10) >>= randBinSeq
-      , liftM MsgBin16 $ choose (0, 10) >>= randBinSeq
-      , liftM MsgBin32 $ choose (0, 10) >>= randBinSeq
-          ]
+    frequency [
+        (vw, return MsgNil)
+      , (vw, return MsgFalse)
+      , (vw, return MsgTrue)
+      , (1, liftM MsgFixArray $ choose (1, 7) >>= randMsg)
+      , (1, liftM MsgArray16 $ choose (1, 7) >>= randMsg)
+      , (1, liftM MsgArray32 $ choose (1, 7) >>= randMsg)
+      , (1, liftM MsgFixMap $ choose (1, 5) >>= randMap)
+      , (1, liftM MsgMap16 $ choose (1, 5) >>= randMap)
+      , (1, liftM MsgMap32 $ choose (1, 5) >>= randMap)
+      , (vw, liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1))
+      , (vw, liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1))
+      , (vw, liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1))
+      , (vw, liftM MsgU16 $ choose (0, (1 `shiftL` 16)-1))
+      , (vw, liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1))
+      , (vw, liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1))
+      , (vw, liftM MsgFixStr $ choose (0, 31) >>= randStr)
+      , (vw, liftM MsgStr8 $ choose (0, 31) >>= randStr)
+      , (vw, liftM MsgStr16 $ choose (0, 31) >>= randStr)
+      , (vw, liftM MsgStr32 $ choose (0, 31) >>= randStr)
+      , (vw, liftM MsgFloat32 $ arbitrary)
+      , (vw, liftM MsgFloat64 $ arbitrary)
+      , (vw, liftM MsgBin8 $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM MsgBin16 $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM MsgBin32 $ choose (0, 10) >>= randBinSeq)
+      ]
+
 main = do
-  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..10]] :: IO [Msg]
+  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
   forM_ msges (\msg -> print $ msg)
