@@ -84,10 +84,16 @@ randMap n = do
 aw = 1
 
 -- map weight
-mp = 1
+mw = 1
 
 -- value weight
 vw = 3
+
+-- max signed
+maxS n = (1 `shiftL` (n - 1)) - 1
+
+-- max unsigned
+maxUS n = (1 `shiftL` n) - 1
 
 instance Arbitrary Msg where 
   arbitrary = do
@@ -95,18 +101,18 @@ instance Arbitrary Msg where
         (vw, return MsgNil)
       , (vw, return MsgFalse)
       , (vw, return MsgTrue)
-      , (1, liftM MsgFixArray $ choose (1, 7) >>= randMsg)
-      , (1, liftM MsgArray16 $ choose (1, 7) >>= randMsg)
-      , (1, liftM MsgArray32 $ choose (1, 7) >>= randMsg)
-      , (1, liftM MsgFixMap $ choose (1, 5) >>= randMap)
-      , (1, liftM MsgMap16 $ choose (1, 5) >>= randMap)
-      , (1, liftM MsgMap32 $ choose (1, 5) >>= randMap)
-      , (vw, liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1))
-      , (vw, liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1))
-      , (vw, liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1))
-      , (vw, liftM MsgU16 $ choose (0, (1 `shiftL` 16)-1))
-      , (vw, liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1))
-      , (vw, liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1))
+      , (aw, liftM MsgFixArray $ choose (1, 7) >>= randMsg)
+      , (aw, liftM MsgArray16 $ choose (1, 10) >>= randMsg)
+      , (aw, liftM MsgArray32 $ choose (1, 10) >>= randMsg)
+      , (mw, liftM MsgFixMap $ choose (1, 5) >>= randMap)
+      , (mw, liftM MsgMap16 $ choose (1, 10) >>= randMap)
+      , (mw, liftM MsgMap32 $ choose (1, 10) >>= randMap)
+      , (vw, liftM MsgPFixNum $ choose (0, maxUS 7))
+      , (vw, liftM MsgNFixNum $ choose (0, maxUS 5))
+      , (vw, liftM MsgU8 $ choose (0, maxUS 8))
+      , (vw, liftM MsgU16 $ choose (0, maxUS 16))
+      , (vw, liftM MsgU32 $ choose (0, maxUS 32))
+      , (vw, liftM MsgU64 $ choose (0, maxUS 63))
       , (vw, liftM MsgFixStr $ choose (0, 31) >>= randStr)
       , (vw, liftM MsgStr8 $ choose (0, 31) >>= randStr)
       , (vw, liftM MsgStr16 $ choose (0, 31) >>= randStr)
