@@ -357,9 +357,17 @@ proc popBe64(buf): auto =
 proc popData(buf: UnpackBuf, p: pointer, size: int) =
   copyMem(p, buf.p, size)
   buf.inc(size)
+  
 
 type Unpacker = ref object
   buf: UnpackBuf
+
+proc unpack(upc: Unpacker): Msg
+proc popMap(upc: Unpacker, size: int): seq[tuple[key:Msg, val:Msg]] =
+  var v: seq[tuple[key: Msg, val:Msg]] = @[]
+  for i in 0..(size-1):
+    v.add((upc.unpack, upc.unpack))
+  v
 
 proc mkUnpacker(buf: UnpackBuf): Unpacker =
   Unpacker (
@@ -405,17 +413,11 @@ proc unpack(upc: Unpacker): Msg =
   of 0x80..0x8f:
     echo "fixmap"
     let sz: int = h and 0x0f
-    var v: seq[tuple[key:Msg, val:Msg]] = @[]
-    for i in 0..(sz-1):
-      v.add((upc.unpack, upc.unpack))
-    FixMap(v)
+    FixMap(upc.popMap(sz))
   of 0xdf:
     echo "map32"
     let sz: int = cast[int](buf.popBe32)
-    var v: seq[tuple[key:Msg, val:Msg]] = @[]
-    for i in 0..(sz-1):
-      v.add((upc.unpack, upc.unpack))
-    Map32(v)
+    Map32(upc.popMap(sz))
   of 0x00..0x7f:
     echo "pfixnum"
     let v: int = h and 0x7f
