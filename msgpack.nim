@@ -173,7 +173,13 @@ proc mkPacker(buf: PackBuf): Packer =
   Packer (
     buf: buf
   )
+
 proc pack(pc: Packer, msg: Msg)
+
+proc appendArray(pc: Packer, xs: seq[Msg]) =
+  for e in xs:
+    pc.pack(e)
+
 proc appendMap(pc: Packer, map: seq[tuple[key:Msg, val:Msg]]) =
   for e in map:
     pc.pack(e.key)
@@ -207,16 +213,14 @@ proc pack(pc: Packer, msg: Msg) =
     let h: int = 0x90 or len(msg.vFixArray)
     buf.ensureMore(1)
     buf.appendHeader(h)
-    for e in msg.vFixArray:
-      pc.pack(e)
+    pc.appendArray(msg.vFixArray)
   of mkArray16:
     echo "array16"
     let sz = len(msg.vArray16)
     buf.ensureMore(3)
     buf.appendHeader(0xdc)
     buf.appendBe16(cast[b16](sz.toU16))
-    for e in msg.vArray16:
-      pc.pack(e)
+    pc.appendArray(msg.vArray16)
   of mkPFixNum:
     echo "pfixnum"
     let h: int = 0x7f and msg.vPFixNum.int
