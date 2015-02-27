@@ -173,6 +173,11 @@ proc mkPacker(buf: PackBuf): Packer =
   Packer (
     buf: buf
   )
+proc pack(pc: Packer, msg: Msg)
+proc appendMap(pc: Packer, map: seq[tuple[key:Msg, val:Msg]]) =
+  for e in map:
+    pc.pack(e.key)
+    pc.pack(e.val)
 
 proc pack(pc: Packer, msg: Msg) =
   let buf = pc.buf
@@ -251,20 +256,14 @@ proc pack(pc: Packer, msg: Msg) =
     let h = 0x80 or sz
     buf.ensureMore(1)
     buf.appendHeader(h)
-    for e in msg.vFixMap:
-      let (k, v) = e
-      pc.pack(k)
-      pc.pack(v)
+    pc.appendMap(msg.vFixMap)
   of mkMap32:
     echo "map32"
     let sz = len(msg.vMap32)
     buf.ensureMore(5)
     buf.appendHeader(0xdf)
     buf.appendBe32(cast[b32](sz.toU32))
-    for e in msg.vMap32:
-      let (k, v) = e
-      pc.pack(k)
-      pc.pack(v)
+    pc.appendMap(msg.vMap32)
   of mkFloat32:
     echo "float32"
     buf.ensureMore(1+4)
