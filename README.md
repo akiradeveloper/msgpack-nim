@@ -22,8 +22,8 @@ Checklist:
 * ~~false~~  
 * ~~true~~  
 * ~~bin 8~~  
-* bin 16  
-* bin 32  
+* ~~bin 16~~  
+* ~~bin 32~~  
 * ext 8  
 * ext 16  
 * ~~ext 32~~  

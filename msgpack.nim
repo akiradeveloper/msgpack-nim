@@ -40,6 +40,8 @@ type
     mkFixExt1
     mkExt32
     mkBin8
+    mkBin16
+    mkBin32
   Msg = ref MsgObj
   MsgObj = object
     case kind: MsgKind
@@ -65,6 +67,8 @@ type
     of mkFloat32: vFloat32: float32
     of mkFloat64: vFloat64: float64
     of mkBin8: vBin8: seq[b8]
+    of mkBin16: vBin16: seq[b8]
+    of mkBin32: vBin32: seq[b8]
     of mkExt32:
       typeExt32: uint8
       vExt32: seq[b8]
@@ -156,6 +160,14 @@ proc Ext32*(t: uint8, data: seq[b8]): Msg =
 proc Bin8*(v: seq[b8]): Msg =
   assert(len(v) < (1 shl 8))
   Msg(kind: mkBin8, vBin8: v)
+
+proc Bin16*(v: seq[b8]): Msg =
+  assert(len(v) < (1 shl 16))
+  Msg(kind: mkBin16, vBin16: v)
+
+proc Bin32*(v: seq[b8]): Msg =
+  assert(len(v) < (1 shl 32))
+  Msg(kind: mkBin32, vBin32: v)
 
 type PackBuf = ref object
   p: seq[b8]
@@ -356,6 +368,22 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[b8](sz.toU8))
     var m = msg
     buf.appendData(addr(m.vBin8[0]), sz)
+  of mkBin16:
+    echo "bin16"
+    let sz = len(msg.vBin16)
+    buf.ensureMore(1+2+sz)
+    buf.appendHeader(0xc5)
+    buf.appendBe16(cast[b16](sz.toU16))
+    var m = msg
+    buf.appendData(addr(m.vBin16[0]), sz)
+  of mkBin32:
+    echo "bin32"
+    let sz = len(msg.vBin32)
+    buf.ensureMore(1+4+sz)
+    buf.appendHeader(0xc6)
+    buf.appendBe32(cast[b32](sz.toU32))
+    var m = msg
+    buf.appendData(addr(m.vBin32[0]), sz)
   of mkFixExt1:
     echo "fixext1"
     buf.ensureMore(3)
@@ -548,6 +576,18 @@ proc unpack(upc: Unpacker): Msg =
     var d = newSeq[b8](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin8(d)
+  of 0xc5:
+    echo "bin16"
+    let sz = cast[uint16](buf.popBe16)
+    var d = newSeq[b8](sz.int)
+    buf.popData(addr(d[0]), sz.int)
+    Bin16(d)
+  of 0xc6:
+    echo "bin32"
+    let sz = cast[uint32](buf.popBe32)
+    var d = newSeq[b8](sz.int)
+    buf.popData(addr(d[0]), sz.int)
+    Bin32(d)
   else:
     assert(false) # not reachable
     Nil()
@@ -601,3 +641,5 @@ when isMainModule:
   t(Float64(0.78901'f64))
   t(Ext32(12, @[cast[b8](1),2,3]))
   t(Bin8(@[cast[b8](4),5,6]))
+  t(Bin16(@[cast[b8](4),5,6]))
+  t(Bin32(@[cast[b8](4),5,6]))
