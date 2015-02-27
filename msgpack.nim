@@ -441,8 +441,7 @@ proc unpack(upc: Unpacker): Msg =
     echo "fixstr"
     let sz: int = h.int and 0x1f
     var s = newString(sz)
-    copyMem(addr(s[0]), buf.p, sz)
-    buf.inc(sz)
+    buf.popData(addr(s[0]), sz)
     FixStr(s)
   of 0xca:
     echo "float32"
