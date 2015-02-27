@@ -22,6 +22,8 @@ data Msg =
   | MsgStr16 String
   | MsgStr32 String
   | MsgFixMap [(Msg, Msg)]
+  | MsgMap16 [(Msg, Msg)]
+  | MsgMap32 [(Msg, Msg)]
   | MsgFloat32 Float
   | MsgFloat64 Double
   | MsgBin8 [Int]
@@ -52,6 +54,8 @@ msgShow (MsgStr8 s) = "Str8(" ++ show s ++ ")"
 msgShow (MsgStr16 s) = "Str16(" ++ show s ++ ")"
 msgShow (MsgStr32 s) = "Str32(" ++ show s ++ ")"
 msgShow (MsgFixMap xs) = "FixMap(@[" ++ mapShow xs ++ "])"
+msgShow (MsgMap16 xs) = "FixMap(@[" ++ mapShow xs ++ "])"
+msgShow (MsgMap32 xs) = "FixMap(@[" ++ mapShow xs ++ "])"
 msgShow (MsgFloat32 n) = "Float32(" ++ show n ++ ")"
 msgShow (MsgFloat64 n) = "Float64(" ++ show n ++ ")"
 msgShow (MsgBin8 xs) = "Bin8(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" ++ show x ++ ")") xs) ++ "])"
@@ -86,6 +90,8 @@ instance Arbitrary Msg where
       , liftM MsgArray16 $ choose (1, 7) >>= randMsg
       , liftM MsgArray32 $ choose (1, 7) >>= randMsg
       , liftM MsgFixMap $ choose (1, 5) >>= randMap
+      , liftM MsgMap16 $ choose (1, 5) >>= randMap
+      , liftM MsgMap32 $ choose (1, 5) >>= randMap
       , liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1)
       , liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1)
       , liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1)
@@ -103,5 +109,5 @@ instance Arbitrary Msg where
       , liftM MsgBin32 $ choose (0, 10) >>= randBinSeq
           ]
 main = do
-  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..100]] :: IO [Msg]
+  msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..10]] :: IO [Msg]
   forM_ msges (\msg -> print $ msg)
