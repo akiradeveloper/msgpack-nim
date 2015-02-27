@@ -55,37 +55,25 @@ randBinSeq n = sequence [choose (0, 255) | _ <- [1..n]]
 
 instance Arbitrary Msg where 
   arbitrary = do
-    n <- choose (1, 14) :: Gen Int
-    case n of
-      1 -> return MsgNil
-      2 -> return MsgFalse
-      3 -> return MsgTrue
-      4 -> do
-        l <- choose (1, 7) :: Gen Int
-        liftM MsgFixArray $ sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
-      5 -> do
-        liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1)
-      6 -> do
-        liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1)
-      7 -> do
-        liftM MsgU16 $ choose (0, (1 `shiftL` 16)-1)
-      8 -> do
-        liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1)
-      9 -> do
-        liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1)
-      10 -> do
-        n <- choose (0, 31) :: Gen Int
-        liftM MsgFixStr $ randStr n
-      11 -> do
-        liftM MsgFloat32 $ arbitrary
-      12 -> do
-        liftM MsgFloat64 $ arbitrary
-      13 -> do
-        n <- choose (0, 10) :: Gen Word8
-        liftM MsgBin8 $ randBinSeq (fromIntegral n)
-      14 -> do
-        liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1)
-
+    oneof [
+        return MsgNil
+      , return MsgFalse
+      , return MsgTrue
+      , do l <- choose (1, 7) :: Gen Int
+           liftM MsgFixArray $ sequence $ [arbitrary :: Gen Msg | _ <- [1..l]]
+      , liftM MsgPFixNum $ choose (0, (1 `shiftL` 7)-1)
+      , liftM MsgNFixNum $ choose (0, (1 `shiftL` 5)-1)
+      , liftM MsgU8 $ choose (0, (1 `shiftL` 8)-1)
+      , liftM MsgU16 $ choose (0, (1 `shiftL` 16)-1)
+      , liftM MsgU32 $ choose (0, (1 `shiftL` 32)-1)
+      , liftM MsgU64 $ choose (0, (1 `shiftL` 63)-1)
+      , do n <- choose (0, 31) :: Gen Int
+           liftM MsgFixStr $ randStr n
+      , liftM MsgFloat32 $ arbitrary
+      , liftM MsgFloat64 $ arbitrary
+      , do n <- choose (0, 10) :: Gen Word8
+           liftM MsgBin8 $ randBinSeq (fromIntegral n)
+          ]
 main = do
   msges <- sequence $ [generate (arbitrary :: Gen Msg) | _ <- [1..1000]] :: IO [Msg]
   forM_ msges (\msg -> print $ msg)
