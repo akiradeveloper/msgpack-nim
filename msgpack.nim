@@ -31,6 +31,8 @@ type
     mkU32
     mkU64
     mkFixStr
+    mkStr8
+    mkStr16
     mkStr32
     mkFloat32
     mkFloat64
@@ -55,6 +57,8 @@ type
     of mkU32: vU32: uint32
     of mkU64: vU64: uint64
     of mkFixStr: vFixStr: string
+    of mkStr8: vStr8: string
+    of mkStr16: vStr16: string
     of mkStr32: vStr32: string
     of mkFloat32: vFloat32: float32
     of mkFloat64: vFloat64: float64
@@ -74,6 +78,12 @@ proc Map16*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
 
 proc Map32*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
   Msg(kind: mkMap32, vMap32: v)
+
+proc Str8*(s: string): Msg =
+  Msg(kind: mkStr8, vStr8: s)
+
+proc Str16*(s: string): Msg =
+  Msg(kind: mkStr16, vStr16: s)
 
 proc Str32*(s: string): Msg =
   Msg(kind: mkStr32, vStr32: s)
@@ -199,6 +209,22 @@ proc appendMap(pc: Packer, map: seq[tuple[key:Msg, val:Msg]]) =
 proc pack(pc: Packer, msg: Msg) =
   let buf = pc.buf
   case msg.kind:
+  of mkStr8:
+    echo "str8"
+    let sz = len(msg.vStr8)
+    buf.ensureMore(1 + sz)
+    buf.appendHeader(0xd9)
+    buf.appendBe8(cast[b8](sz.toU8))
+    var m = msg
+    buf.appendData(addr(m.vStr8[0]), sz)
+  of mkStr16:
+    echo "str16"
+    let sz = len(msg.vStr16)
+    buf.ensureMore(3 + sz)
+    buf.appendHeader(0xda)
+    buf.appendBe16(cast[b16](sz.toU16))
+    var m = msg
+    buf.appendData(addr(m.vStr16[0]), sz)
   of mkStr32:
     echo "str32"
     let sz = len(msg.vStr32)
@@ -416,6 +442,18 @@ proc unpack(upc: Unpacker): Msg =
   echo h.int
 
   case h
+  of 0xd9:
+    echo "str8"
+    let sz = cast[uint8](buf.popBe8)
+    var s = newString(sz.int)
+    buf.popData(addr(s[0]), sz.int)
+    Str8(s)
+  of 0xda:
+    echo "str16"
+    let sz = cast[uint16](buf.popBe16)
+    var s = newString(sz.int)
+    buf.popData(addr(s[0]), sz.int)
+    Str16(s)
   of 0xdb:
     echo "str32"
     let sz = cast[uint32](buf.popBe32)
@@ -438,9 +476,6 @@ proc unpack(upc: Unpacker): Msg =
   of 0xdc:
     echo "array16"
     let sz = cast[uint16](buf.popBe16)
-    # var v: seq[Msg] = @[]
-    # for i in 0..(sz-1):
-    #   v.add(upc.unpack())
     Array16(upc.popArray(sz.int))
   of 0xdd:
     echo "array32"
@@ -542,6 +577,8 @@ when isMainModule:
   t(U32(10000))
   t(U64(10000))
   t(FixStr("akiradeveloper"))
+  t(Str8("akiradeveloper"))
+  t(Str16("akiradeveloper"))
   t(Str32("akiradeveloper"))
   t(FixMap(@[(Nil(),True()),(False(),U16(1))]))
   t(Map16(@[(Nil(),True()),(False(),U16(1))]))
