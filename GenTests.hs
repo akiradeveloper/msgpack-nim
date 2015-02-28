@@ -58,9 +58,9 @@ msgShow (MsgMap16 xs) = "FixMap(@[" ++ mapShow xs ++ "])"
 msgShow (MsgMap32 xs) = "FixMap(@[" ++ mapShow xs ++ "])"
 msgShow (MsgFloat32 n) = "Float32(" ++ show n ++ ")"
 msgShow (MsgFloat64 n) = "Float64(" ++ show n ++ ")"
-msgShow (MsgBin8 xs) = "Bin8(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" ++ show x ++ ")") xs) ++ "])"
-msgShow (MsgBin16 xs) = "Bin16(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" ++ show x ++ ")") xs) ++ "])"
-msgShow (MsgBin32 xs) = "Bin32(@[" ++ (intercalate "," $ map (\x -> "cast[b8](" ++ show x ++ ")") xs) ++ "])"
+msgShow (MsgBin8 xs) = "Bin8(@[" ++ (intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs) ++ "])"
+msgShow (MsgBin16 xs) = "Bin16(@[" ++ (intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs) ++ "])"
+msgShow (MsgBin32 xs) = "Bin32(@[" ++ (intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs) ++ "])"
 
 instance Show Msg where
   show = msgShow

@@ -5,11 +5,11 @@
 
 # ------------------------------------------------------------------------------
 
+import streams
 import endians
 import unsigned
 
 type
- b8*  = int8
  b16 = int16
  b32 = int32
  b64 = int64
@@ -66,15 +66,15 @@ type
     of mkStr32: vStr32: string
     of mkFloat32: vFloat32: float32
     of mkFloat64: vFloat64: float64
-    of mkBin8: vBin8: seq[b8]
-    of mkBin16: vBin16: seq[b8]
-    of mkBin32: vBin32: seq[b8]
+    of mkBin8: vBin8: seq[byte]
+    of mkBin16: vBin16: seq[byte]
+    of mkBin32: vBin32: seq[byte]
     of mkExt32:
       typeExt32: uint8
-      vExt32: seq[b8]
+      vExt32: seq[byte]
     of mkFixExt1:
       typeFixExt1: uint8
-      vFixExt1: seq[b8] # should be array[1, b8]
+      vFixExt1: seq[byte] # should be array[1, byte]
 
 proc `$`(msg: Msg): string =
   $(msg[])
@@ -145,28 +145,28 @@ proc Float32*(v: float32): Msg =
 proc Float64*(v: float64): Msg =
   Msg(kind: mkFloat64, vFloat64: v)
 
-proc FixExt1*(t: uint8, data: seq[b8]): Msg =
+proc FixExt1*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 1)
   Msg(kind: mkFixExt1, typeFixExt1: t, vFixExt1: data)
 
-proc Ext32*(t: uint8, data: seq[b8]): Msg =
+proc Ext32*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 32))
   Msg(kind: mkExt32, typeExt32: t, vExt32: data)
 
-proc Bin8*(v: seq[b8]): Msg =
+proc Bin8*(v: seq[byte]): Msg =
   assert(len(v) < (1 shl 8))
   Msg(kind: mkBin8, vBin8: v)
 
-proc Bin16*(v: seq[b8]): Msg =
+proc Bin16*(v: seq[byte]): Msg =
   assert(len(v) < (1 shl 16))
   Msg(kind: mkBin16, vBin16: v)
 
-proc Bin32*(v: seq[b8]): Msg =
+proc Bin32*(v: seq[byte]): Msg =
   assert(len(v) < (1 shl 32))
   Msg(kind: mkBin32, vBin32: v)
 
 type PackBuf = ref object
-  p: seq[b8]
+  p: seq[byte]
   pos: int
 
 proc ensureMore(buf: PackBuf, addLen: int) =
@@ -174,12 +174,12 @@ proc ensureMore(buf: PackBuf, addLen: int) =
   if unlikely((buf.pos + addLen) >= len(buf.p)):
     buf.p.setLen((len(buf.p) + addLen) * 2)
 
-proc appendBe8(buf: PackBuf, v: b8) =
+proc appendBe8(buf: PackBuf, v: byte) =
   buf.p[buf.pos] = v
   buf.pos += 1
 
 proc appendHeader(buf: PackBuf, v: int) =
-  buf.appendBe8(cast[b8](v))
+  buf.appendBe8(cast[byte](v))
 
 proc appendBe16(buf: PackBuf, v: b16) =
   var vv = v
@@ -227,7 +227,7 @@ proc pack(pc: Packer, msg: Msg) =
     let sz = len(msg.vStr8)
     buf.ensureMore(1 + sz)
     buf.appendHeader(0xd9)
-    buf.appendBe8(cast[b8](sz.toU8))
+    buf.appendBe8(cast[byte](sz.toU8))
     var m = msg
     buf.appendData(addr(m.vStr8[0]), sz)
   of mkStr16:
@@ -292,7 +292,7 @@ proc pack(pc: Packer, msg: Msg) =
     echo "u8"
     buf.ensureMore(1+1)
     buf.appendHeader(0xcc)
-    buf.appendBe8(cast[b8](msg.vU8))
+    buf.appendBe8(cast[byte](msg.vU8))
   of mkU16:
     echo "u16"
     buf.ensureMore(1+2)
@@ -353,7 +353,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+4+1+sz)
     buf.appendHeader(0xc9)
     buf.appendBe32(cast[b32](sz.toU32))
-    buf.appendBe8(cast[b8](msg.typeExt32))
+    buf.appendBe8(cast[byte](msg.typeExt32))
     var m = msg
     buf.appendData(addr(m.vExt32[0]), sz)
   of mkBin8:
@@ -361,7 +361,7 @@ proc pack(pc: Packer, msg: Msg) =
     let sz = len(msg.vBin8)
     buf.ensureMore(1+1+sz)
     buf.appendHeader(0xc4)
-    buf.appendBe8(cast[b8](sz.toU8))
+    buf.appendBe8(cast[byte](sz.toU8))
     var m = msg
     buf.appendData(addr(m.vBin8[0]), sz)
   of mkBin16:
@@ -384,7 +384,7 @@ proc pack(pc: Packer, msg: Msg) =
     echo "fixext1"
     buf.ensureMore(3)
     buf.appendHeader(0xd4)
-    buf.appendBe8(cast[b8](msg.typeFixExt1))
+    buf.appendBe8(cast[byte](msg.typeFixExt1))
     var m = msg
     buf.appendData(addr(m.vFixExt1[0]), 1)
 
@@ -396,8 +396,8 @@ proc inc(buf: UnpackBuf, n:int) =
   a += n
   buf.p = cast[pointer](a)
 
-proc fromBe8(p: pointer): b8 =
-  cast[ptr b8](p)[]
+proc fromBe8(p: pointer): byte =
+  cast[ptr byte](p)[]
 
 proc fromBe16(p: pointer): b16 =
   var v: b16
@@ -563,25 +563,25 @@ proc unpack(upc: Unpacker): Msg =
     echo "ext32"
     let sz = cast[uint32](buf.popBe32)
     let t = cast[uint8](buf.popBe8)
-    var d = newSeq[b8](sz.int)
+    var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Ext32(t, d)
   of 0xc4:
     echo "bin8"
     let sz = cast[uint8](buf.popBe8)
-    var d = newSeq[b8](sz.int)
+    var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin8(d)
   of 0xc5:
     echo "bin16"
     let sz = cast[uint16](buf.popBe16)
-    var d = newSeq[b8](sz.int)
+    var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin16(d)
   of 0xc6:
     echo "bin32"
     let sz = cast[uint32](buf.popBe32)
-    var d = newSeq[b8](sz.int)
+    var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin32(d)
   else:
@@ -593,7 +593,7 @@ proc unpack(upc: Unpacker): Msg =
 
 proc pack*(msg: Msg): tuple[p: pointer, size: int] =
   ## Serialize message to byte sequence
-  let packBuf = PackBuf(p: newSeq[b8](128), pos: 0)
+  let packBuf = PackBuf(p: newSeq[byte](128), pos: 0)
   let pc = mkPacker(packBuf)
   pc.pack(msg)
   tuple(p: cast[pointer](addr(packBuf.p[0])), size: packBuf.pos)
@@ -603,6 +603,12 @@ proc unpack*(p: pointer): Msg =
   let unpackbuf = UnpackBuf(p:p)
   let upc = mkUnpacker(unpackBuf)
   upc.unpack()
+
+proc pack*(s: Stream, msg: Msg) =
+  discard
+
+proc unpack*(s: Stream): Msg =
+  discard
 
 # ------------------------------------------------------------------------------
 
@@ -635,7 +641,7 @@ when isMainModule:
   t(Map32(@[(Nil,True),(False,U16(1))]))
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
-  t(Ext32(12, @[cast[b8](1),2,3]))
-  t(Bin8(@[cast[b8](4),5,6]))
-  t(Bin16(@[cast[b8](4),5,6]))
-  t(Bin32(@[cast[b8](4),5,6]))
+  t(Ext32(12, @[cast[byte](1),2,3]))
+  t(Bin8(@[cast[byte](4),5,6]))
+  t(Bin16(@[cast[byte](4),5,6]))
+  t(Bin32(@[cast[byte](4),5,6]))
