@@ -5,6 +5,7 @@
 
 # ------------------------------------------------------------------------------
 
+import sequtils
 import streams
 import endians
 import unsigned
@@ -13,6 +14,10 @@ type
  b16 = int16
  b32 = int32
  b64 = int64
+
+type Iterable[T] = object
+  size: int
+  iter: iterator(): T
 
 type
   MsgKind = enum
@@ -48,7 +53,7 @@ type
     of mkNil: nil
     of mkFalse: nil
     of mkTrue: nil
-    of mkFixArray: vFixArray: seq[Msg]
+    of mkFixArray: vFixArray: Iterable[Msg]
     of mkArray16: vArray16: seq[Msg]
     of mkArray32: vArray32: seq[Msg]
     of mkFixMap: vFixMap: seq[tuple[key:Msg, val:Msg]]
@@ -76,6 +81,13 @@ type
       typeFixExt1: uint8
       vFixExt1: seq[byte] # should be array[1, byte]
 
+proc `$`(msg: Msg): string
+proc `$`(xs: Iterable[Msg]): string =
+  var it: iterator(): Msg
+  deepCopy(it, xs.iter)
+  let s = toSeq(it())
+  $s
+
 proc `$`(msg: Msg): string =
   $(msg[])
 
@@ -99,9 +111,14 @@ let
   False*: Msg = Msg(kind: mkFalse)
   True*: Msg = Msg(kind: mkTrue)
 
+proc toIter[T](v: seq[T]): iterator(): T =
+  return iterator(): T =
+    for e in v:
+      yield e
+
 proc FixArray*(v: seq[Msg]): Msg =
   assert(len(v) < 16)
-  Msg(kind: mkFixArray, vFixArray: v)
+  Msg(kind: mkFixArray, vFixArray: Iterable[Msg](size: len(v), iter: toIter(v)))
 
 proc Array16*(v: seq[Msg]): Msg =
   assert(len(v) < (1 shl 16))
@@ -260,10 +277,11 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xc3)
   of mkFixArray:
     echo "fixarray"
-    let h: int = 0x90 or len(msg.vFixArray)
+    let h: int = 0x90 or msg.vFixArray.size
     buf.ensureMore(1)
     buf.appendHeader(h)
-    pc.appendArray(msg.vFixArray)
+    for e in msg.vFixArray.iter():
+      pc.pack(e)
   of mkArray16:
     echo "array16"
     let sz = len(msg.vArray16)
@@ -503,10 +521,13 @@ proc unpack(upc: Unpacker): Msg =
   of 0xc3:
     echo "true"
     True
-  of 0x90..0x9f: # uint8
+  of 0x90..0x9f:
     echo "fixarray"
     let sz: int = h and 0x0f
-    FixArray(upc.popArray(sz))
+    let it = iterator(): Msg =
+      for i in 0..(sz-1):
+        yield (upc.unpack)
+    Msg(kind: mkFixArray, vFixArray: Iterable[Msg](size: sz, iter: it))
   of 0xdc:
     echo "array16"
     let sz = cast[uint16](buf.popBe16)
@@ -614,10 +635,12 @@ proc unpack*(s: Stream): Msg =
 
 proc t*(msg: Msg) =
   ## Test by cyclic translation
+  let before = $expr(msg)
   let (p, sz) = pack(msg)
   discard sz
   let unpacked = unpack(p)
-  assert($expr(msg) == $expr(unpacked))
+  let after = $expr(unpacked)
+  assert(before == after)
 
 when isMainModule:
   t(Nil)
