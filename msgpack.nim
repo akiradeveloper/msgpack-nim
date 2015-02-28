@@ -116,9 +116,14 @@ proc toIter[T](v: seq[T]): iterator(): T =
     for e in v:
       yield e
 
-proc FixArray*(v: seq[Msg]): Msg =
-  assert(len(v) < 16)
-  Msg(kind: mkFixArray, vFixArray: Iterable[Msg](size: len(v), iter: toIter(v)))
+proc toIterable*[T](v: seq[T]): Iterable[T] =
+  Iterable[T](
+    size: len(v),
+    iter: toIter(v))
+
+proc FixArray*(v: Iterable[Msg]): Msg =
+  assert(v.size < 16)
+  Msg(kind: mkFixArray, vFixArray: v)
 
 proc Array16*(v: seq[Msg]): Msg =
   assert(len(v) < (1 shl 16))
@@ -646,7 +651,7 @@ when isMainModule:
   t(Nil)
   t(False)
   t(True)
-  t(FixArray(@[True, False]))
+  t(FixArray(toIterable(@[True, False])))
   t(Array16(@[True, False]))
   t(Array32(@[True, False]))
   t(PFixNum(127))
