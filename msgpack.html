@@ -1193,7 +1193,7 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   of mkPFixNum: 
     vPFixNum*: uint8
   of mkNFixNum: 
-    vNFixNum*: uint8
+    vNFixNum*: int8
   of mkU8: 
     vU8*: uint8
   of mkU16: 
@@ -1261,8 +1261,8 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     title="Map32*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg"><wbr />Map32</a></li>
   <li><a class="reference" href="#PFixNum,uint8"
     title="PFixNum*(v: uint8): Msg"><wbr />PFix<wbr />Num</a></li>
-  <li><a class="reference" href="#NFixNum,uint8"
-    title="NFixNum*(v: uint8): Msg"><wbr />NFix<wbr />Num</a></li>
+  <li><a class="reference" href="#NFixNum,int8"
+    title="NFixNum*(v: int8): Msg"><wbr />NFix<wbr />Num</a></li>
   <li><a class="reference" href="#U8,uint8"
     title="U8*(v: uint8): Msg"><wbr />U8</a></li>
   <li><a class="reference" href="#U16,uint16"
@@ -1361,7 +1361,7 @@ Basically an iterator but having explicit finite size
   <span class="Keyword">of</span> <span class="Identifier">mkPFixNum</span><span class="Other">:</span> 
     <span class="Identifier">vPFixNum</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
   <span class="Keyword">of</span> <span class="Identifier">mkNFixNum</span><span class="Other">:</span> 
-    <span class="Identifier">vNFixNum</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+    <span class="Identifier">vNFixNum</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int8</span>
   <span class="Keyword">of</span> <span class="Identifier">mkU8</span><span class="Other">:</span> 
     <span class="Identifier">vU8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
   <span class="Keyword">of</span> <span class="Identifier">mkU16</span><span class="Other">:</span> 
@@ -1466,7 +1466,7 @@ Basically an iterator but having explicit finite size
 
 
 </dd>
-<dt id="NFixNum"><a name="NFixNum,uint8"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NFixNum</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dt id="NFixNum"><a name="NFixNum,int8"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NFixNum</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">int8</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
 <dd>
 
 
@@ -1571,7 +1571,7 @@ Test by cyclic translation. Don't use.
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-03-01 14:28:25 UTC</small>
+        <small>Made with Nim. Generated: 2015-03-01 16:46:27 UTC</small>
       </div>
     </div>
   </div>
