@@ -33,7 +33,7 @@ data Msg =
   | MsgBin8 [Int]
   | MsgBin16 [Int]
   | MsgBin32 [Int]
-  -- | MsgFixExt1 Int [Int]
+  | MsgFixExt1 Int [Int]
   -- fixext1
   -- fixext2
   -- fixext4
@@ -81,7 +81,7 @@ msgShow (MsgStr32 s) = "Str32(" ++ show s ++ ")"
 msgShow (MsgBin8 xs) = "Bin8(@[" ++ binShow xs ++ "])"
 msgShow (MsgBin16 xs) = "Bin16(@[" ++ binShow xs ++ "])"
 msgShow (MsgBin32 xs) = "Bin32(@[" ++ binShow xs ++ "])"
--- msgShow (MsgFixExt1 t xs) = "FixExt1(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgFixExt1 t xs) = "FixExt1(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
 
 instance Show Msg where
   show = msgShow
@@ -147,6 +147,7 @@ instance Arbitrary Msg where
       , (vw, liftM MsgBin8 $ choose (0, 10) >>= randBinSeq)
       , (vw, liftM MsgBin16 $ choose (0, 10) >>= randBinSeq)
       , (vw, liftM MsgBin32 $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM2 MsgFixExt1 (choose (0,255)) $ randBinSeq 1)
       ]
 
 main = do
