@@ -63,6 +63,7 @@ Checklist:
 * Implement nim object to/from msg object translation  
 * Performance evaluation  
 * Talk with offical Ruby implementation  
+* Don't repeat yourself: The code now has too much duplications. Using templates?  
 
 ### Author
 

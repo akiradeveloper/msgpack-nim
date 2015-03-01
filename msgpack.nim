@@ -64,6 +64,10 @@ type
     mkBin16
     mkBin32
     mkFixExt1
+    mkFixExt2
+    mkFixExt4
+    mkFixExt8
+    mkFixExt16
     mkExt32
   Msg* = ref MsgObj
   MsgObj* {.acyclic.} = object
@@ -99,6 +103,18 @@ type
     of mkFixExt1:
       typeFixExt1*: uint8
       vFixExt1*: seq[byte]
+    of mkFixExt2:
+      typeFixExt2*: uint8
+      vFixExt2*: seq[byte]
+    of mkFixExt4:
+      typeFixExt4*: uint8
+      vFixExt4*: seq[byte]
+    of mkFixExt8:
+      typeFixExt8*: uint8
+      vFixExt8*: seq[byte]
+    of mkFixExt16:
+      typeFixExt16*: uint8
+      vFixExt16*: seq[byte]
     of mkExt32:
       typeExt32*: uint8
       vExt32*: seq[byte]
@@ -209,6 +225,22 @@ proc Bin32*(v: seq[byte]): Msg =
 proc FixExt1*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 1)
   Msg(kind: mkFixExt1, typeFixExt1: t, vFixExt1: data)
+
+proc FixExt2*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) == 2)
+  Msg(kind: mkFixExt2, typeFixExt2: t, vFixExt2: data)
+
+proc FixExt4*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) == 4)
+  Msg(kind: mkFixExt4, typeFixExt4: t, vFixExt4: data)
+
+proc FixExt8*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) == 8)
+  Msg(kind: mkFixExt8, typeFixExt8: t, vFixExt8: data)
+
+proc FixExt16*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) == 16)
+  Msg(kind: mkFixExt16, typeFixExt16: t, vFixExt16: data)
 
 proc Ext32*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 32))
@@ -449,6 +481,34 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[byte](msg.typeFixExt1))
     var m = msg
     buf.appendData(addr(m.vFixExt1[0]), 1)
+  of mkFixExt2:
+    echo "fixext2"
+    buf.ensureMore(4)
+    buf.appendHeader(0xd5)
+    buf.appendBe8(cast[byte](msg.typeFixExt2))
+    var m = msg
+    buf.appendData(addr(m.vFixExt2[0]), 2)
+  of mkFixExt4:
+    echo "fixext4"
+    buf.ensureMore(6)
+    buf.appendHeader(0xd6)
+    buf.appendBe8(cast[byte](msg.typeFixExt4))
+    var m = msg
+    buf.appendData(addr(m.vFixExt4[0]), 4)
+  of mkFixExt8:
+    echo "fixext8"
+    buf.ensureMore(10)
+    buf.appendHeader(0xd7)
+    buf.appendBe8(cast[byte](msg.typeFixExt8))
+    var m = msg
+    buf.appendData(addr(m.vFixExt8[0]), 8)
+  of mkFixExt16:
+    echo "fixext16"
+    buf.ensureMore(18)
+    buf.appendHeader(0xd8)
+    buf.appendBe8(cast[byte](msg.typeFixExt16))
+    var m = msg
+    buf.appendData(addr(m.vFixExt16[0]), 16)
   of mkExt32:
     echo "ext32"
     let sz = len(msg.vExt32)
@@ -646,10 +706,35 @@ proc unpack(upc: Unpacker): Msg =
     buf.popData(addr(d[0]), sz.int)
     Bin32(d)
   of 0xd4:
+    echo "fixext1"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](1)
     buf.popData(addr(d[0]), 1)
     FixExt1(t, d)
+  of 0xd5:
+    echo "fixext2"
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[byte](2)
+    buf.popData(addr(d[0]), 2)
+    FixExt2(t, d)
+  of 0xd6:
+    echo "fixext4"
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[byte](4)
+    buf.popData(addr(d[0]), 4)
+    FixExt4(t, d)
+  of 0xd7:
+    echo "fixext8"
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[byte](8)
+    buf.popData(addr(d[0]), 8)
+    FixExt8(t, d)
+  of 0xd8:
+    echo "fixext16"
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[byte](16)
+    buf.popData(addr(d[0]), 16)
+    FixExt16(t, d)
   of 0xc9:
     echo "ext32"
     let sz = cast[uint32](buf.popBe32)
@@ -716,4 +801,9 @@ when isMainModule:
   t(Bin8(@[cast[byte](4),5,6]))
   t(Bin16(@[cast[byte](4),5,6]))
   t(Bin32(@[cast[byte](4),5,6]))
+  t(FixExt1(12, @[cast[byte](1)]))
+  t(FixExt2(12, @[cast[byte](1), 2]))
+  t(FixExt4(12, @[cast[byte](1), 2, 3, 4]))
+  t(FixExt8(12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8]))
+  t(FixExt16(12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]))
   t(Ext32(12, @[cast[byte](1),2,3]))
