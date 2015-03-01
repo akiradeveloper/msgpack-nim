@@ -59,9 +59,9 @@ type
     of mkFixArray: vFixArray: Iterable[Msg]
     of mkArray16: vArray16: Iterable[Msg]
     of mkArray32: vArray32: Iterable[Msg]
-    of mkFixMap: vFixMap: seq[tuple[key:Msg, val:Msg]]
-    of mkMap16: vMap16: seq[tuple[key:Msg, val:Msg]]
-    of mkMap32: vMap32: seq[tuple[key:Msg, val:Msg]]
+    of mkFixMap: vFixMap: Iterable[tuple[key:Msg, val:Msg]]
+    of mkMap16: vMap16: Iterable[tuple[key:Msg, val:Msg]]
+    of mkMap32: vMap32: Iterable[tuple[key:Msg, val:Msg]]
     of mkPFixNum: vPFixNum: uint8
     of mkNFixNum: vNFixNum: uint8
     of mkU8: vU8: uint8
@@ -85,8 +85,8 @@ type
       vFixExt1: seq[byte] # should be array[1, byte]
 
 proc `$`(msg: Msg): string
-proc `$`(xs: Iterable[Msg]): string =
-  var it: iterator(): Msg
+proc `$`[T](xs: Iterable[T]): string =
+  var it: iterator(): T
   deepCopy(it, xs.iter)
   let s = toSeq(it())
   $s
@@ -94,10 +94,16 @@ proc `$`(xs: Iterable[Msg]): string =
 proc `$`(msg: Msg): string =
   $(msg[])
 
-proc Map16*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
+proc FixMap*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
+  assert(len(v) < 16)
+  Msg(kind: mkFixMap, vFixMap: v)
+
+proc Map16*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
+  assert(len(v) < (1 shl 16))
   Msg(kind: mkMap16, vMap16: v)
 
-proc Map32*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
+proc Map32*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
+  assert(len(v) < (1 shl 32))
   Msg(kind: mkMap32, vMap32: v)
 
 proc Str8*(s: string): Msg =
@@ -159,10 +165,6 @@ proc U64*(v: uint64): Msg =
 proc FixStr*(v: string): Msg =
   assert(len(v) < 32)
   Msg(kind: mkFixStr, vFixStr: v)
-
-proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
-  assert(len(v) < 16)
-  Msg(kind: mkFixMap, vFixMap: v)
 
 proc Float32*(v: float32): Msg =
   Msg(kind: mkFloat32, vFloat32: v)
@@ -239,8 +241,8 @@ proc appendArray(pc: Packer, xs: Iterable[Msg]) =
   for e in xs.iter():
     pc.pack(e)
 
-proc appendMap(pc: Packer, map: seq[tuple[key:Msg, val:Msg]]) =
-  for e in map:
+proc appendMap(pc: Packer, map: Iterable[tuple[key:Msg, val:Msg]]) =
+  for e in map.iter():
     pc.pack(e.key)
     pc.pack(e.val)
 
@@ -483,11 +485,13 @@ proc popArray(upc: Unpacker, size: int): Iterable[Msg] =
         yield upc.unpack
   )
 
-proc popMap(upc: Unpacker, size: int): seq[tuple[key:Msg, val:Msg]] =
-  var v: seq[tuple[key: Msg, val:Msg]] = @[]
-  for i in 0..(size-1):
-    v.add((upc.unpack, upc.unpack))
-  v
+proc popMap(upc: Unpacker, size: int): Iterable[tuple[key:Msg, val:Msg]] =
+  Iterable[tuple[key:Msg, val:Msg]] (
+    size: size,
+    iter: iterator(): tuple[key:Msg, val:Msg] =
+      for i in 0..(size-1):
+        yield (upc.unpack, upc.unpack)
+  )
 
 proc mkUnpacker(buf: UnpackBuf): Unpacker =
   Unpacker (
@@ -666,9 +670,9 @@ when isMainModule:
   t(Str8("akiradeveloper"))
   t(Str16("akiradeveloper"))
   t(Str32("akiradeveloper"))
-  t(FixMap(@[(Nil,True),(False,U16(1))]))
-  t(Map16(@[(Nil,True),(False,U16(1))]))
-  t(Map32(@[(Nil,True),(False,U16(1))]))
+  t(FixMap(toIterable(@[(Nil,True),(False,U16(1))])))
+  t(Map16(toIterable(@[(Nil,True),(False,U16(1))])))
+  t(Map32(toIterable(@[(Nil,True),(False,U16(1))])))
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
   t(Ext32(12, @[cast[byte](1),2,3]))
