@@ -26,7 +26,6 @@ proc toIter[T](v: seq[T]): iterator(): T =
     for e in v:
       yield e
 
-# use openArray[T] ?
 proc toIterable*[T](v: seq[T]): Iterable[T] =
   Iterable[T](
     size: len(v),

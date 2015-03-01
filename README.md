@@ -10,13 +10,11 @@ msgpack-nim currently provides only the basic functionality.
 Please see what's listed in Todo section. Compared to other language bindings, it's well-tested by
 1000 auto-generated test cases by Haskell QuickCheck, which always runs
 on every commit to Github repository. Please try `make quickcheck` on your local machine
-to see what's happening. Have a nice packing!
+to see what happens (It will take a bit while. Be patient). Have a nice packing!
 
 ![Overview](https://rawgit.com/akiradeveloper/msgpack-nim/master/overview.svg)
 
 ### Progress
-
-Not yet beta but will be soon.
 
 Checklist:
 

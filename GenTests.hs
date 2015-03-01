@@ -38,14 +38,9 @@ data Msg =
   | MsgFixExt4 Int [Int]
   | MsgFixExt8 Int [Int]
   | MsgFixExt16 Int [Int]
-  -- fixext1
-  -- fixext2
-  -- fixext4
-  -- fixext8
-  -- fixext16
-  -- ext8
-  -- ext16
-  -- ext32
+  | MsgExt8 Int [Int]
+  | MsgExt16 Int [Int]
+  | MsgExt32 Int [Int]
 
 binShow :: [Int] -> String
 binShow xs = intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs
@@ -90,6 +85,9 @@ msgShow (MsgFixExt2 t xs) = "FixExt2(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
 msgShow (MsgFixExt4 t xs) = "FixExt4(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
 msgShow (MsgFixExt8 t xs) = "FixExt8(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
 msgShow (MsgFixExt16 t xs) = "FixExt16(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgExt8 t xs) = "Ext8(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgExt16 t xs) = "Ext16(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgExt32 t xs) = "Ext32(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
 
 instance Show Msg where
   show = msgShow
@@ -160,6 +158,9 @@ instance Arbitrary Msg where
       , (vw, liftM2 MsgFixExt4 (choose (0,255)) $ randBinSeq 4)
       , (vw, liftM2 MsgFixExt8 (choose (0,255)) $ randBinSeq 8)
       , (vw, liftM2 MsgFixExt16 (choose (0,255)) $ randBinSeq 16)
+      , (vw, liftM2 MsgExt8 (choose (0,255)) $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM2 MsgExt16 (choose (0,255)) $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM2 MsgExt32 (choose (0,255)) $ choose (0, 10) >>= randBinSeq)
       ]
 
 main = do
