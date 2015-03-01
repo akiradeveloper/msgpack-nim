@@ -1167,6 +1167,66 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   mkFalse, mkPFixNum, mkNFixNum, mkU8, mkU16, mkU32, mkU64, mkFloat32, 
   mkFloat64, mkFixStr, mkStr8, mkStr16, mkStr32, mkBin8, mkBin16, mkBin32, 
   mkFixExt1, mkExt32"><wbr />Msg<wbr />Kind</a></li>
+  <li><a class="reference" href="#Msg"
+    title="Msg* = ref MsgObj"><wbr />Msg</a></li>
+  <li><a class="reference" href="#MsgObj"
+    title="MsgObj* = object 
+  case kind*: MsgKind
+  of mkFixArray: 
+    vFixArray*: Iterable[Msg]
+  of mkArray16: 
+    vArray16*: Iterable[Msg]
+  of mkArray32: 
+    vArray32*: Iterable[Msg]
+  of mkFixMap: 
+    vFixMap*: Iterable[tuple[key: Msg, val: Msg]]
+  of mkMap16: 
+    vMap16*: Iterable[tuple[key: Msg, val: Msg]]
+  of mkMap32: 
+    vMap32*: Iterable[tuple[key: Msg, val: Msg]]
+  of mkNil: 
+    nil
+  of mkTrue: 
+    nil
+  of mkFalse: 
+    nil
+  of mkPFixNum: 
+    vPFixNum*: uint8
+  of mkNFixNum: 
+    vNFixNum*: uint8
+  of mkU8: 
+    vU8*: uint8
+  of mkU16: 
+    vU16*: uint16
+  of mkU32: 
+    vU32*: uint32
+  of mkU64: 
+    vU64*: uint64
+  of mkFloat32: 
+    vFloat32*: float32
+  of mkFloat64: 
+    vFloat64*: float64
+  of mkFixStr: 
+    vFixStr*: string
+  of mkStr8: 
+    vStr8*: string
+  of mkStr16: 
+    vStr16*: string
+  of mkStr32: 
+    vStr32*: string
+  of mkBin8: 
+    vBin8*: seq[byte]
+  of mkBin16: 
+    vBin16*: seq[byte]
+  of mkBin32: 
+    vBin32*: seq[byte]
+  of mkFixExt1: 
+      typeFixExt1*: uint8
+      vFixExt1*: seq[byte]
+
+  of mkExt32: 
+      typeExt32*: uint8
+      vExt32*: seq[byte]"><wbr />Msg<wbr />Obj</a></li>
 
   </ul>
 </li>
@@ -1174,11 +1234,11 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <a class="reference reference-toplevel" href="#9" id="59">Lets</a>
   <ul class="simple simple-toc-section">
       <li><a class="reference" href="#Nil"
-    title="Nil*: Msg = Msg(kind: mkNil)"><wbr />Nil</a></li>
+    title="Nil* = Msg(kind: mkNil)"><wbr />Nil</a></li>
   <li><a class="reference" href="#True"
-    title="True*: Msg = Msg(kind: mkTrue)"><wbr />True</a></li>
+    title="True* = Msg(kind: mkTrue)"><wbr />True</a></li>
   <li><a class="reference" href="#False"
-    title="False*: Msg = Msg(kind: mkFalse)"><wbr />False</a></li>
+    title="False* = Msg(kind: mkFalse)"><wbr />False</a></li>
 
   </ul>
 </li>
@@ -1261,7 +1321,7 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <span class="Identifier">iter</span><span class="Operator">*</span><span class="Other">:</span> <span class="Keyword">iterator</span> <span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span>
 </pre></dt>
 <dd>
-
+Basically an iterator but having explicit finite size
 
 </dd>
 <dt id="MsgKind"><a name="MsgKind"></a><pre><span class="Identifier">MsgKind</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">enum</span> 
@@ -1273,22 +1333,90 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
 
 
 </dd>
+<dt id="Msg"><a name="Msg"></a><pre><span class="Identifier">Msg</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">ref</span> <span class="Identifier">MsgObj</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="MsgObj"><a name="MsgObj"></a><pre><span class="Identifier">MsgObj</span><span class="Operator">*</span> <span class="Other">{.</span><span class="Identifier">acyclic</span><span class="Other">.}</span> <span class="Other">=</span> <span class="Keyword">object</span> 
+  <span class="Keyword">case</span> <span class="Identifier">kind</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">MsgKind</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFixArray</span><span class="Other">:</span> 
+    <span class="Identifier">vFixArray</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Iterable</span><span class="Other">[</span><span class="Identifier">Msg</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkArray16</span><span class="Other">:</span> 
+    <span class="Identifier">vArray16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Iterable</span><span class="Other">[</span><span class="Identifier">Msg</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkArray32</span><span class="Other">:</span> 
+    <span class="Identifier">vArray32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Iterable</span><span class="Other">[</span><span class="Identifier">Msg</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFixMap</span><span class="Other">:</span> 
+    <span class="Identifier">vFixMap</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Iterable</span><span class="Other">[</span><span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">key</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">,</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">]</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkMap16</span><span class="Other">:</span> 
+    <span class="Identifier">vMap16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Iterable</span><span class="Other">[</span><span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">key</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">,</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">]</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkMap32</span><span class="Other">:</span> 
+    <span class="Identifier">vMap32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Iterable</span><span class="Other">[</span><span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">key</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">,</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">]</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkNil</span><span class="Other">:</span> 
+    <span class="Keyword">nil</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkTrue</span><span class="Other">:</span> 
+    <span class="Keyword">nil</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFalse</span><span class="Other">:</span> 
+    <span class="Keyword">nil</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkPFixNum</span><span class="Other">:</span> 
+    <span class="Identifier">vPFixNum</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkNFixNum</span><span class="Other">:</span> 
+    <span class="Identifier">vNFixNum</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkU8</span><span class="Other">:</span> 
+    <span class="Identifier">vU8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkU16</span><span class="Other">:</span> 
+    <span class="Identifier">vU16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint16</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkU32</span><span class="Other">:</span> 
+    <span class="Identifier">vU32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint32</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkU64</span><span class="Other">:</span> 
+    <span class="Identifier">vU64</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint64</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFloat32</span><span class="Other">:</span> 
+    <span class="Identifier">vFloat32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">float32</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFloat64</span><span class="Other">:</span> 
+    <span class="Identifier">vFloat64</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">float64</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFixStr</span><span class="Other">:</span> 
+    <span class="Identifier">vFixStr</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkStr8</span><span class="Other">:</span> 
+    <span class="Identifier">vStr8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkStr16</span><span class="Other">:</span> 
+    <span class="Identifier">vStr16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkStr32</span><span class="Other">:</span> 
+    <span class="Identifier">vStr32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkBin8</span><span class="Other">:</span> 
+    <span class="Identifier">vBin8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkBin16</span><span class="Other">:</span> 
+    <span class="Identifier">vBin16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkBin32</span><span class="Other">:</span> 
+    <span class="Identifier">vBin32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkFixExt1</span><span class="Other">:</span> 
+      <span class="Identifier">typeFixExt1</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vFixExt1</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  <span class="Keyword">of</span> <span class="Identifier">mkExt32</span><span class="Other">:</span> 
+      <span class="Identifier">typeExt32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vExt32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  </pre></dt>
+<dd>
+
+
+</dd>
 
 </dl></div>
 <div class="section" id="9">
 <h1><a class="toc-backref" href="#9">Lets</a></h1>
 <dl class="item">
-<dt id="Nil"><a name="Nil"></a><pre><span class="Identifier">Nil</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Msg</span> <span class="Other">=</span> <span class="Identifier">Msg</span><span class="Other">(</span><span class="Identifier">kind</span><span class="Other">:</span> <span class="Identifier">mkNil</span><span class="Other">)</span></pre></dt>
+<dt id="Nil"><a name="Nil"></a><pre><span class="Identifier">Nil</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Identifier">Msg</span><span class="Other">(</span><span class="Identifier">kind</span><span class="Other">:</span> <span class="Identifier">mkNil</span><span class="Other">)</span></pre></dt>
 <dd>
 
 
 </dd>
-<dt id="True"><a name="True"></a><pre><span class="Identifier">True</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Msg</span> <span class="Other">=</span> <span class="Identifier">Msg</span><span class="Other">(</span><span class="Identifier">kind</span><span class="Other">:</span> <span class="Identifier">mkTrue</span><span class="Other">)</span></pre></dt>
+<dt id="True"><a name="True"></a><pre><span class="Identifier">True</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Identifier">Msg</span><span class="Other">(</span><span class="Identifier">kind</span><span class="Other">:</span> <span class="Identifier">mkTrue</span><span class="Other">)</span></pre></dt>
 <dd>
 
 
 </dd>
-<dt id="False"><a name="False"></a><pre><span class="Identifier">False</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Msg</span> <span class="Other">=</span> <span class="Identifier">Msg</span><span class="Other">(</span><span class="Identifier">kind</span><span class="Other">:</span> <span class="Identifier">mkFalse</span><span class="Other">)</span></pre></dt>
+<dt id="False"><a name="False"></a><pre><span class="Identifier">False</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Identifier">Msg</span><span class="Other">(</span><span class="Identifier">kind</span><span class="Other">:</span> <span class="Identifier">mkFalse</span><span class="Other">)</span></pre></dt>
 <dd>
 
 
@@ -1420,17 +1548,17 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
 </dd>
 <dt id="pack"><a name="pack,Stream,Msg"></a><pre><span class="Keyword">proc</span> <span class="Identifier">pack</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">st</span><span class="Other">:</span> <span class="Identifier">Stream</span><span class="Other">;</span> <span class="Identifier">msg</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">)</span></pre></dt>
 <dd>
-Serialize message to byte sequence
+Serialize message to streaming byte sequence
 
 </dd>
 <dt id="unpack"><a name="unpack,Stream"></a><pre><span class="Keyword">proc</span> <span class="Identifier">unpack</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">st</span><span class="Other">:</span> <span class="Identifier">Stream</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
 <dd>
-Deserialize byte sequence to message
+Deserialize streaming byte sequence to message
 
 </dd>
 <dt id="t"><a name="t,Msg"></a><pre><span class="Keyword">proc</span> <span class="Identifier">t</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">msg</span><span class="Other">:</span> <span class="Identifier">Msg</span><span class="Other">)</span></pre></dt>
 <dd>
-Test by cyclic translation
+Test by cyclic translation. Don't use.
 
 </dd>
 
@@ -1443,7 +1571,7 @@ Test by cyclic translation
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-03-01 14:02:13 UTC</small>
+        <small>Made with Nim. Generated: 2015-03-01 14:28:25 UTC</small>
       </div>
     </div>
   </div>

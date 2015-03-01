@@ -14,6 +14,7 @@ type
   b64 = int64
 
 type Iterable*[T] = object
+  ## Basically an iterator but having explicit finite size
   size*: int
   iter*: iterator(): T
 
@@ -25,10 +26,12 @@ proc toIter[T](v: seq[T]): iterator(): T =
     for e in v:
       yield e
 
+# use openArray[T] ?
 proc toIterable*[T](v: seq[T]): Iterable[T] =
   Iterable[T](
     size: len(v),
-    iter: toIter(v))
+    iter: toIter(v)
+  )
 
 type
   MsgKind* = enum
@@ -58,8 +61,8 @@ type
     mkBin32
     mkFixExt1
     mkExt32
-  Msg = ref MsgObj
-  MsgObj {.acyclic.} = object
+  Msg* = ref MsgObj
+  MsgObj* {.acyclic.} = object
     case kind*: MsgKind
     of mkFixArray: vFixArray*: Iterable[Msg]
     of mkArray16: vArray16*: Iterable[Msg]
@@ -87,7 +90,7 @@ type
     of mkBin32: vBin32*: seq[byte]
     of mkFixExt1:
       typeFixExt1*: uint8
-      vFixExt1*: seq[byte] # should be array[1, byte]
+      vFixExt1*: seq[byte]
     of mkExt32:
       typeExt32*: uint8
       vExt32*: seq[byte]
@@ -128,9 +131,9 @@ proc Map32*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
   Msg(kind: mkMap32, vMap32: v)
 
 let
-  Nil*: Msg = Msg(kind: mkNil)
-  True*: Msg = Msg(kind: mkTrue)
-  False*: Msg = Msg(kind: mkFalse)
+  Nil* = Msg(kind: mkNil)
+  True* = Msg(kind: mkTrue)
+  False* = Msg(kind: mkFalse)
 
 proc PFixNum*(v: uint8): Msg =
   assert(v < 128)
@@ -196,6 +199,8 @@ proc Ext32*(t: uint8, data: seq[byte]): Msg =
 type PackBuf = ref object
   st: Stream
 
+# Stream automatically extend the writable area
+# so we don't need to manipulate the size by hands.
 proc ensureMore(buf: PackBuf, addLen: int) =
   discard
 
@@ -249,42 +254,6 @@ proc appendMap(pc: Packer, map: Iterable[tuple[key:Msg, val:Msg]]) =
 proc pack(pc: Packer, msg: Msg) =
   let buf = pc.buf
   case msg.kind:
-  of mkStr8:
-    echo "str8"
-    let sz = len(msg.vStr8)
-    buf.ensureMore(1 + sz)
-    buf.appendHeader(0xd9)
-    buf.appendBe8(cast[byte](sz.toU8))
-    var m = msg
-    buf.appendData(addr(m.vStr8[0]), sz)
-  of mkStr16:
-    echo "str16"
-    let sz = len(msg.vStr16)
-    buf.ensureMore(3 + sz)
-    buf.appendHeader(0xda)
-    buf.appendBe16(cast[b16](sz.toU16))
-    var m = msg
-    buf.appendData(addr(m.vStr16[0]), sz)
-  of mkStr32:
-    echo "str32"
-    let sz = len(msg.vStr32)
-    buf.ensureMore(5 + sz)
-    buf.appendHeader(0xdb)
-    buf.appendBe32(cast[b32](sz.toU32))
-    var m = msg
-    buf.appendData(addr(m.vStr32[0]), sz)
-  of mkNil:
-    echo "nil"
-    buf.ensureMore(1)
-    buf.appendHeader(0xc0)
-  of mkFalse:
-    echo "false"
-    buf.ensureMore(1)
-    buf.appendHeader(0xc2)
-  of mkTrue:
-    echo "true"
-    buf.ensureMore(1)
-    buf.appendHeader(0xc3)
   of mkFixArray:
     echo "fixarray"
     let h: int = 0x90 or msg.vFixArray.size
@@ -305,6 +274,39 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xdd)
     buf.appendBe32(cast[b32](sz.toU32))
     pc.appendArray(msg.vArray32)
+  of mkFixMap:
+    echo "fixmap"
+    let sz = len(msg.vFixMap)
+    let h = 0x80 or sz
+    buf.ensureMore(1)
+    buf.appendHeader(h)
+    pc.appendMap(msg.vFixMap)
+  of mkMap16:
+    echo "map16"
+    let sz = len(msg.vMap16)
+    buf.ensureMore(3)
+    buf.appendHeader(0xde)
+    buf.appendBe16(cast[b16](sz.toU16))
+    pc.appendMap(msg.vMap16)
+  of mkMap32:
+    echo "map32"
+    let sz = len(msg.vMap32)
+    buf.ensureMore(5)
+    buf.appendHeader(0xdf)
+    buf.appendBe32(cast[b32](sz.toU32))
+    pc.appendMap(msg.vMap32)
+  of mkNil:
+    echo "nil"
+    buf.ensureMore(1)
+    buf.appendHeader(0xc0)
+  of mkFalse:
+    echo "false"
+    buf.ensureMore(1)
+    buf.appendHeader(0xc2)
+  of mkTrue:
+    echo "true"
+    buf.ensureMore(1)
+    buf.appendHeader(0xc3)
   of mkPFixNum:
     echo "pfixnum"
     let h: int = 0x7f and msg.vPFixNum.int
@@ -335,35 +337,6 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+8)
     buf.appendHeader(0xcf)
     buf.appendBe64(cast[b64](msg.vU64))
-  of mkFixStr:
-    echo "fixstr"
-    let sz: int = len(msg.vFixStr)
-    let h = 0xa0 or sz
-    buf.ensureMore(1+sz)
-    buf.appendHeader(h)
-    var m = msg
-    buf.appendData(addr(m.vFixStr[0]), sz)
-  of mkFixMap:
-    echo "fixmap"
-    let sz = len(msg.vFixMap)
-    let h = 0x80 or sz
-    buf.ensureMore(1)
-    buf.appendHeader(h)
-    pc.appendMap(msg.vFixMap)
-  of mkMap16:
-    echo "map16"
-    let sz = len(msg.vMap16)
-    buf.ensureMore(3)
-    buf.appendHeader(0xde)
-    buf.appendBe16(cast[b16](sz.toU16))
-    pc.appendMap(msg.vMap16)
-  of mkMap32:
-    echo "map32"
-    let sz = len(msg.vMap32)
-    buf.ensureMore(5)
-    buf.appendHeader(0xdf)
-    buf.appendBe32(cast[b32](sz.toU32))
-    pc.appendMap(msg.vMap32)
   of mkFloat32:
     echo "float32"
     buf.ensureMore(1+4)
@@ -374,15 +347,38 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+8)
     buf.appendHeader(0xcb)
     buf.appendBe64(cast[b64](msg.vFloat64))
-  of mkExt32:
-    echo "ext32"
-    let sz = len(msg.vExt32)
-    buf.ensureMore(1+4+1+sz)
-    buf.appendHeader(0xc9)
-    buf.appendBe32(cast[b32](sz.toU32))
-    buf.appendBe8(cast[byte](msg.typeExt32))
+  of mkFixStr:
+    echo "fixstr"
+    let sz: int = len(msg.vFixStr)
+    let h = 0xa0 or sz
+    buf.ensureMore(1+sz)
+    buf.appendHeader(h)
     var m = msg
-    buf.appendData(addr(m.vExt32[0]), sz)
+    buf.appendData(addr(m.vFixStr[0]), sz)
+  of mkStr8:
+    echo "str8"
+    let sz = len(msg.vStr8)
+    buf.ensureMore(1 + sz)
+    buf.appendHeader(0xd9)
+    buf.appendBe8(cast[byte](sz.toU8))
+    var m = msg
+    buf.appendData(addr(m.vStr8[0]), sz)
+  of mkStr16:
+    echo "str16"
+    let sz = len(msg.vStr16)
+    buf.ensureMore(3 + sz)
+    buf.appendHeader(0xda)
+    buf.appendBe16(cast[b16](sz.toU16))
+    var m = msg
+    buf.appendData(addr(m.vStr16[0]), sz)
+  of mkStr32:
+    echo "str32"
+    let sz = len(msg.vStr32)
+    buf.ensureMore(5 + sz)
+    buf.appendHeader(0xdb)
+    buf.appendBe32(cast[b32](sz.toU32))
+    var m = msg
+    buf.appendData(addr(m.vStr32[0]), sz)
   of mkBin8:
     echo "bin8"
     let sz = len(msg.vBin8)
@@ -414,6 +410,15 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[byte](msg.typeFixExt1))
     var m = msg
     buf.appendData(addr(m.vFixExt1[0]), 1)
+  of mkExt32:
+    echo "ext32"
+    let sz = len(msg.vExt32)
+    buf.ensureMore(1+4+1+sz)
+    buf.appendHeader(0xc9)
+    buf.appendBe32(cast[b32](sz.toU32))
+    buf.appendBe8(cast[byte](msg.typeExt32))
+    var m = msg
+    buf.appendData(addr(m.vExt32[0]), sz)
 
 # ------------------------------------------------------------------------------
 
@@ -486,33 +491,6 @@ proc unpack(upc: Unpacker): Msg =
   echo h.int
 
   case h
-  of 0xd9:
-    echo "str8"
-    let sz = cast[uint8](buf.popBe8)
-    var s = newString(sz.int)
-    buf.popData(addr(s[0]), sz.int)
-    Str8(s)
-  of 0xda:
-    echo "str16"
-    let sz = cast[uint16](buf.popBe16)
-    var s = newString(sz.int)
-    buf.popData(addr(s[0]), sz.int)
-    Str16(s)
-  of 0xdb:
-    echo "str32"
-    let sz = cast[uint32](buf.popBe32)
-    var s = newString(sz.int)
-    buf.popData(addr(s[0]), sz.int)
-    Str32(s)
-  of 0xc0:
-    echo "nil"
-    Nil
-  of 0xc2:
-    echo "false"
-    False
-  of 0xc3:
-    echo "true"
-    True
   of 0x90..0x9f:
     echo "fixarray"
     let sz: int = h and 0x0f
@@ -540,6 +518,15 @@ proc unpack(upc: Unpacker): Msg =
     echo "map32"
     let sz: int = cast[int](buf.popBe32)
     Map32(upc.popMap(sz))
+  of 0xc0:
+    echo "nil"
+    Nil
+  of 0xc3:
+    echo "true"
+    True
+  of 0xc2:
+    echo "false"
+    False
   of 0x00..0x7f:
     echo "pfixnum"
     let v: int = h and 0x7f
@@ -560,25 +547,36 @@ proc unpack(upc: Unpacker): Msg =
   of 0xcf:
     echo "u64"
     U64(cast[uint64](buf.popBe64))
-  of 0xa0..0xbf:
-    echo "fixstr"
-    let sz: int = h.int and 0x1f
-    var s = newString(sz)
-    buf.popData(addr(s[0]), sz)
-    FixStr(s)
   of 0xca:
     echo "float32"
     Float32(cast[float32](buf.popBe32))
   of 0xcb:
     echo "float64"
     Float64(cast[float64](buf.popBe64))
-  of 0xc9:
-    echo "ext32"
+  of 0xa0..0xbf:
+    echo "fixstr"
+    let sz: int = h.int and 0x1f
+    var s = newString(sz)
+    buf.popData(addr(s[0]), sz)
+    FixStr(s)
+  of 0xd9:
+    echo "str8"
+    let sz = cast[uint8](buf.popBe8)
+    var s = newString(sz.int)
+    buf.popData(addr(s[0]), sz.int)
+    Str8(s)
+  of 0xda:
+    echo "str16"
+    let sz = cast[uint16](buf.popBe16)
+    var s = newString(sz.int)
+    buf.popData(addr(s[0]), sz.int)
+    Str16(s)
+  of 0xdb:
+    echo "str32"
     let sz = cast[uint32](buf.popBe32)
-    let t = cast[uint8](buf.popBe8)
-    var d = newSeq[byte](sz.int)
-    buf.popData(addr(d[0]), sz.int)
-    Ext32(t, d)
+    var s = newString(sz.int)
+    buf.popData(addr(s[0]), sz.int)
+    Str32(s)
   of 0xc4:
     echo "bin8"
     let sz = cast[uint8](buf.popBe8)
@@ -597,6 +595,14 @@ proc unpack(upc: Unpacker): Msg =
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin32(d)
+  # FIXME fixext1
+  of 0xc9:
+    echo "ext32"
+    let sz = cast[uint32](buf.popBe32)
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[byte](sz.int)
+    buf.popData(addr(d[0]), sz.int)
+    Ext32(t, d)
   else:
     assert(false) # not reachable
     Nil
@@ -604,13 +610,13 @@ proc unpack(upc: Unpacker): Msg =
 # ------------------------------------------------------------------------------
 
 proc pack*(st: Stream, msg: Msg) =
-  ## Serialize message to byte sequence
+  ## Serialize message to streaming byte sequence
   let buf = PackBuf(st: st)
   let pc = mkPacker(buf)
   pc.pack(msg)
 
 proc unpack*(st: Stream): Msg =
-  ## Deserialize byte sequence to message
+  ## Deserialize streaming byte sequence to message
   let buf = UnpackBuf(st: st)
   let upc = mkUnpacker(buf)
   upc.unpack
@@ -618,7 +624,7 @@ proc unpack*(st: Stream): Msg =
 # ------------------------------------------------------------------------------
 
 proc t*(msg: Msg) =
-  ## Test by cyclic translation
+  ## Test by cyclic translation. Don't use.
   let before = $expr(msg)
   let st = newStringStream()
   st.pack(msg)
@@ -628,28 +634,28 @@ proc t*(msg: Msg) =
   assert(before == after)
 
 when isMainModule:
-  t(Nil)
-  t(False)
-  t(True)
   t(FixArray(toIterable(@[True, False])))
   t(Array16(toIterable(@[True, False])))
   t(Array32(toIterable(@[True, False])))
+  t(FixMap(toIterable(@[(Nil,True),(False,U16(1))])))
+  t(Map16(toIterable(@[(Nil,True),(False,U16(1))])))
+  t(Map32(toIterable(@[(Nil,True),(False,U16(1))])))
+  t(Nil)
+  t(True)
+  t(False)
   t(PFixNum(127))
   t(NFixNum(31))
   t(U16(255))
   t(U16(10000))
   t(U32(10000))
   t(U64(10000))
+  t(Float32(0.12345'f32))
+  t(Float64(0.78901'f64))
   t(FixStr("akiradeveloper"))
   t(Str8("akiradeveloper"))
   t(Str16("akiradeveloper"))
   t(Str32("akiradeveloper"))
-  t(FixMap(toIterable(@[(Nil,True),(False,U16(1))])))
-  t(Map16(toIterable(@[(Nil,True),(False,U16(1))])))
-  t(Map32(toIterable(@[(Nil,True),(False,U16(1))])))
-  t(Float32(0.12345'f32))
-  t(Float64(0.78901'f64))
-  t(Ext32(12, @[cast[byte](1),2,3]))
   t(Bin8(@[cast[byte](4),5,6]))
   t(Bin16(@[cast[byte](4),5,6]))
   t(Bin32(@[cast[byte](4),5,6]))
+  t(Ext32(12, @[cast[byte](1),2,3]))
