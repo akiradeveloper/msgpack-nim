@@ -1164,9 +1164,9 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <li><a class="reference" href="#MsgKind"
     title="MsgKind* = enum 
   mkFixArray, mkArray16, mkArray32, mkFixMap, mkMap16, mkMap32, mkNil, mkTrue, 
-  mkFalse, mkPFixNum, mkNFixNum, mkU8, mkU16, mkU32, mkU64, mkFloat32, 
-  mkFloat64, mkFixStr, mkStr8, mkStr16, mkStr32, mkBin8, mkBin16, mkBin32, 
-  mkFixExt1, mkExt32"><wbr />Msg<wbr />Kind</a></li>
+  mkFalse, mkPFixNum, mkNFixNum, mkU8, mkU16, mkU32, mkU64, mkInt8, mkInt16, 
+  mkInt32, mkInt64, mkFloat32, mkFloat64, mkFixStr, mkStr8, mkStr16, mkStr32, 
+  mkBin8, mkBin16, mkBin32, mkFixExt1, mkExt32"><wbr />Msg<wbr />Kind</a></li>
   <li><a class="reference" href="#Msg"
     title="Msg* = ref MsgObj"><wbr />Msg</a></li>
   <li><a class="reference" href="#MsgObj"
@@ -1202,6 +1202,14 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     vU32*: uint32
   of mkU64: 
     vU64*: uint64
+  of mkInt8: 
+    vInt8*: int8
+  of mkInt16: 
+    vInt16*: int16
+  of mkInt32: 
+    vInt32*: int32
+  of mkInt64: 
+    vInt64*: int64
   of mkFloat32: 
     vFloat32*: float32
   of mkFloat64: 
@@ -1271,6 +1279,14 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     title="U32*(v: uint32): Msg"><wbr />U32</a></li>
   <li><a class="reference" href="#U64,uint64"
     title="U64*(v: uint64): Msg"><wbr />U64</a></li>
+  <li><a class="reference" href="#Int8,int8"
+    title="Int8*(v: int8): Msg"><wbr />Int8</a></li>
+  <li><a class="reference" href="#Int16,int16"
+    title="Int16*(v: int16): Msg"><wbr />Int16</a></li>
+  <li><a class="reference" href="#Int32,int32"
+    title="Int32*(v: int32): Msg"><wbr />Int32</a></li>
+  <li><a class="reference" href="#Int64,int64"
+    title="Int64*(v: int64): Msg"><wbr />Int64</a></li>
   <li><a class="reference" href="#Float32,float32"
     title="Float32*(v: float32): Msg"><wbr />Float32</a></li>
   <li><a class="reference" href="#Float64,float64"
@@ -1326,9 +1342,9 @@ Basically an iterator but having explicit finite size
 </dd>
 <dt id="MsgKind"><a name="MsgKind"></a><pre><span class="Identifier">MsgKind</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">enum</span> 
   <span class="Identifier">mkFixArray</span><span class="Other">,</span> <span class="Identifier">mkArray16</span><span class="Other">,</span> <span class="Identifier">mkArray32</span><span class="Other">,</span> <span class="Identifier">mkFixMap</span><span class="Other">,</span> <span class="Identifier">mkMap16</span><span class="Other">,</span> <span class="Identifier">mkMap32</span><span class="Other">,</span> <span class="Identifier">mkNil</span><span class="Other">,</span> <span class="Identifier">mkTrue</span><span class="Other">,</span> 
-  <span class="Identifier">mkFalse</span><span class="Other">,</span> <span class="Identifier">mkPFixNum</span><span class="Other">,</span> <span class="Identifier">mkNFixNum</span><span class="Other">,</span> <span class="Identifier">mkU8</span><span class="Other">,</span> <span class="Identifier">mkU16</span><span class="Other">,</span> <span class="Identifier">mkU32</span><span class="Other">,</span> <span class="Identifier">mkU64</span><span class="Other">,</span> <span class="Identifier">mkFloat32</span><span class="Other">,</span> 
-  <span class="Identifier">mkFloat64</span><span class="Other">,</span> <span class="Identifier">mkFixStr</span><span class="Other">,</span> <span class="Identifier">mkStr8</span><span class="Other">,</span> <span class="Identifier">mkStr16</span><span class="Other">,</span> <span class="Identifier">mkStr32</span><span class="Other">,</span> <span class="Identifier">mkBin8</span><span class="Other">,</span> <span class="Identifier">mkBin16</span><span class="Other">,</span> <span class="Identifier">mkBin32</span><span class="Other">,</span> 
-  <span class="Identifier">mkFixExt1</span><span class="Other">,</span> <span class="Identifier">mkExt32</span></pre></dt>
+  <span class="Identifier">mkFalse</span><span class="Other">,</span> <span class="Identifier">mkPFixNum</span><span class="Other">,</span> <span class="Identifier">mkNFixNum</span><span class="Other">,</span> <span class="Identifier">mkU8</span><span class="Other">,</span> <span class="Identifier">mkU16</span><span class="Other">,</span> <span class="Identifier">mkU32</span><span class="Other">,</span> <span class="Identifier">mkU64</span><span class="Other">,</span> <span class="Identifier">mkInt8</span><span class="Other">,</span> <span class="Identifier">mkInt16</span><span class="Other">,</span> 
+  <span class="Identifier">mkInt32</span><span class="Other">,</span> <span class="Identifier">mkInt64</span><span class="Other">,</span> <span class="Identifier">mkFloat32</span><span class="Other">,</span> <span class="Identifier">mkFloat64</span><span class="Other">,</span> <span class="Identifier">mkFixStr</span><span class="Other">,</span> <span class="Identifier">mkStr8</span><span class="Other">,</span> <span class="Identifier">mkStr16</span><span class="Other">,</span> <span class="Identifier">mkStr32</span><span class="Other">,</span> 
+  <span class="Identifier">mkBin8</span><span class="Other">,</span> <span class="Identifier">mkBin16</span><span class="Other">,</span> <span class="Identifier">mkBin32</span><span class="Other">,</span> <span class="Identifier">mkFixExt1</span><span class="Other">,</span> <span class="Identifier">mkExt32</span></pre></dt>
 <dd>
 
 
@@ -1370,6 +1386,14 @@ Basically an iterator but having explicit finite size
     <span class="Identifier">vU32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint32</span>
   <span class="Keyword">of</span> <span class="Identifier">mkU64</span><span class="Other">:</span> 
     <span class="Identifier">vU64</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint64</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkInt8</span><span class="Other">:</span> 
+    <span class="Identifier">vInt8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int8</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkInt16</span><span class="Other">:</span> 
+    <span class="Identifier">vInt16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int16</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkInt32</span><span class="Other">:</span> 
+    <span class="Identifier">vInt32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int32</span>
+  <span class="Keyword">of</span> <span class="Identifier">mkInt64</span><span class="Other">:</span> 
+    <span class="Identifier">vInt64</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int64</span>
   <span class="Keyword">of</span> <span class="Identifier">mkFloat32</span><span class="Other">:</span> 
     <span class="Identifier">vFloat32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">float32</span>
   <span class="Keyword">of</span> <span class="Identifier">mkFloat64</span><span class="Other">:</span> 
@@ -1491,6 +1515,26 @@ Basically an iterator but having explicit finite size
 
 
 </dd>
+<dt id="Int8"><a name="Int8,int8"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Int8</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">int8</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="Int16"><a name="Int16,int16"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Int16</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">int16</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="Int32"><a name="Int32,int32"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Int32</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">int32</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="Int64"><a name="Int64,int64"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Int64</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">int64</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
 <dt id="Float32"><a name="Float32,float32"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Float32</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">v</span><span class="Other">:</span> <span class="Identifier">float32</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
 <dd>
 
@@ -1571,7 +1615,7 @@ Test by cyclic translation. Don't use.
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-03-01 16:46:27 UTC</small>
+        <small>Made with Nim. Generated: 2015-03-01 19:39:55 UTC</small>
       </div>
     </div>
   </div>

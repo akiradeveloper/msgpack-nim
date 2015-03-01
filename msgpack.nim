@@ -50,6 +50,10 @@ type
     mkU16
     mkU32
     mkU64
+    mkInt8
+    mkInt16
+    mkInt32
+    mkInt64
     mkFloat32
     mkFloat64
     mkFixStr
@@ -79,6 +83,10 @@ type
     of mkU16: vU16*: uint16
     of mkU32: vU32*: uint32
     of mkU64: vU64*: uint64
+    of mkInt8: vInt8*: int8
+    of mkInt16: vInt16*: int16
+    of mkInt32: vInt32*: int32
+    of mkInt64: vInt64*: int64
     of mkFloat32: vFloat32*: float32
     of mkFloat64: vFloat64*: float64
     of mkFixStr: vFixStr*: string
@@ -154,6 +162,18 @@ proc U32*(v: uint32): Msg =
 
 proc U64*(v: uint64): Msg =
   Msg(kind: mkU64, vU64: v)
+
+proc Int8*(v: int8): Msg =
+  Msg(kind: mkInt8, vInt8: v)
+
+proc Int16*(v: int16): Msg =
+  Msg(kind: mkInt16, vInt16: v)
+
+proc Int32*(v: int32): Msg =
+  Msg(kind: mkInt32, vInt32: v)
+
+proc Int64*(v: int64): Msg =
+  Msg(kind: mkInt64, vInt64: v)
 
 proc Float32*(v: float32): Msg =
   Msg(kind: mkFloat32, vFloat32: v)
@@ -336,6 +356,26 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+8)
     buf.appendHeader(0xcf)
     buf.appendBe64(cast[b64](msg.vU64))
+  of mkInt8:
+    echo "int8"
+    buf.ensureMore(1+1)
+    buf.appendHeader(0xd0)
+    buf.appendBe8(cast[byte](msg.vInt8))
+  of mkInt16:
+    echo "int16"
+    buf.ensureMore(1+2)
+    buf.appendHeader(0xd1)
+    buf.appendBe16(cast[b16](msg.vInt16))
+  of mkInt32:
+    echo "int32"
+    buf.ensureMore(1+4)
+    buf.appendHeader(0xd2)
+    buf.appendBe32(cast[b32](msg.vInt32))
+  of mkInt64:
+    echo "int64"
+    buf.ensureMore(1+8)
+    buf.appendHeader(0xd3)
+    buf.appendBe64(cast[b64](msg.vInt64))
   of mkFloat32:
     echo "float32"
     buf.ensureMore(1+4)
@@ -545,6 +585,18 @@ proc unpack(upc: Unpacker): Msg =
   of 0xcf:
     echo "u64"
     U64(cast[uint64](buf.popBe64))
+  of 0xd0:
+    echo "int8"
+    Int8(cast[int8](buf.popBe8))
+  of 0xd1:
+    echo "int16"
+    Int16(cast[int16](buf.popBe16))
+  of 0xd2:
+    echo "int32"
+    Int32(cast[int32](buf.popBe32))
+  of 0xd3:
+    echo "int64"
+    Int64(cast[int64](buf.popBe64))
   of 0xca:
     echo "float32"
     Float32(cast[float32](buf.popBe32))
@@ -647,6 +699,10 @@ when isMainModule:
   t(U16(10000))
   t(U32(10000))
   t(U64(10000))
+  t(Int16(255))
+  t(Int16(10000))
+  t(Int32(10000))
+  t(Int64(10000))
   t(Float32(0.12345'f32))
   t(Float64(0.78901'f64))
   t(FixStr("akiradeveloper"))

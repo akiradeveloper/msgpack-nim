@@ -35,10 +35,10 @@ Checklist:
 * ~~uint 16~~  
 * ~~uint 32~~  
 * ~~uint 64~~  
-* int8  
-* int16  
-* int32  
-* int64  
+* ~~int8~~  
+* ~~int16~~  
+* ~~int32~~  
+* ~~int64~~  
 * ~~float 32~~  
 * ~~float 64~~  
 * ~~fixstr~~  

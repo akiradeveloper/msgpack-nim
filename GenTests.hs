@@ -20,6 +20,10 @@ data Msg =
   | MsgU16 Int
   | MsgU32 Int
   | MsgU64 Word
+  | MsgInt8 Int
+  | MsgInt16 Int
+  | MsgInt32 Int
+  | MsgInt64 Int
   | MsgFloat32 Float
   | MsgFloat64 Double
   | MsgFixStr String
@@ -54,6 +58,10 @@ msgShow (MsgU8 n) = "U8(" ++ show n ++ "'u8)"
 msgShow (MsgU16 n) = "U16(" ++ show n ++ "'u16)"
 msgShow (MsgU32 n) = "U32(" ++ show n ++ "'u32)"
 msgShow (MsgU64 n) = "U64(" ++ show n ++ "'u64)"
+msgShow (MsgInt8 n) = "Int8(" ++ show n ++ "'i8)"
+msgShow (MsgInt16 n) = "Int16(" ++ show n ++ "'i16)"
+msgShow (MsgInt32 n) = "Int32(" ++ show n ++ "'i32)"
+msgShow (MsgInt64 n) = "Int64(" ++ show n ++ "'i64)"
 msgShow (MsgFloat32 n) = "Float32(" ++ show n ++ ")"
 msgShow (MsgFloat64 n) = "Float64(" ++ show n ++ ")"
 msgShow (MsgFixStr s) = "FixStr(" ++ show s ++ ")"
@@ -109,12 +117,16 @@ instance Arbitrary Msg where
       , (vw, return MsgNil)
       , (vw, return MsgTrue)
       , (vw, return MsgFalse)
-      , (vw, liftM MsgPFixNum $ choose (0, maxUS 7))
+      , (vw, liftM MsgPFixNum $ choose (0, 63))
       , (vw, liftM MsgNFixNum $ choose (-32, 0))
       , (vw, liftM MsgU8 $ choose (0, maxUS 8))
       , (vw, liftM MsgU16 $ choose (0, maxUS 16))
       , (vw, liftM MsgU32 $ choose (0, maxUS 32))
       , (vw, liftM MsgU64 $ choose (0, maxUS 63))
+      , (vw, liftM MsgInt8 $ choose (-127, 127))
+      , (vw, liftM MsgInt16 $ choose (-127, 127))
+      , (vw, liftM MsgInt32 $ choose (-127, 127))
+      , (vw, liftM MsgInt64 $ choose (-127, 127))
       , (vw, liftM MsgFloat32 $ arbitrary)
       , (vw, liftM MsgFloat64 $ arbitrary)
       , (vw, liftM MsgFixStr $ choose (0, 31) >>= randStr)
