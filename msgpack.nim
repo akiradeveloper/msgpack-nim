@@ -191,40 +191,41 @@ proc Ext32*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 32))
   Msg(kind: mkExt32, typeExt32: t, vExt32: data)
 
+# ------------------------------------------------------------------------------
+
 type PackBuf = ref object
-  p: seq[byte]
-  pos: int
+  st: Stream
 
 proc ensureMore(buf: PackBuf, addLen: int) =
-  # If more buffer is required we will double the size
-  if unlikely((buf.pos + addLen) >= len(buf.p)):
-    buf.p.setLen((len(buf.p) + addLen) * 2)
+  discard
 
 proc appendBe8(buf: PackBuf, v: byte) =
-  buf.p[buf.pos] = v
-  buf.pos += 1
+  var vv = v
+  buf.st.writeData(addr(vv), 1)
 
 proc appendHeader(buf: PackBuf, v: int) =
-  buf.appendBe8(cast[byte](v))
+  buf.appendBe8(cast[byte](v.toU8))
 
 proc appendBe16(buf: PackBuf, v: b16) =
   var vv = v
-  bigEndian16(addr(buf.p[buf.pos]), addr(vv))
-  buf.pos += 2
+  var tmp: b16
+  bigEndian16(addr(tmp), addr(vv))
+  buf.st.writeData(addr(tmp), 2)
 
 proc appendBe32(buf: PackBuf, v: b32) =
   var vv = v
-  bigEndian32(addr(buf.p[buf.pos]), addr(vv))
-  buf.pos += 4
+  var tmp: b32
+  bigEndian32(addr(tmp), addr(vv))
+  buf.st.writeData(addr(tmp), 4)
 
 proc appendBe64(buf: PackBuf, v: b64) =
   var vv = v
-  bigEndian64(addr(buf.p[buf.pos]), addr(vv))
-  buf.pos += 8
+  var tmp: b64
+  bigEndian64(addr(tmp), addr(vv))
+  buf.st.writeData(addr(tmp), 8)
 
 proc appendData(buf: PackBuf, p: pointer, size: int) =
-  copyMem(addr(buf.p[buf.pos]), p, size)
-  buf.pos += size
+  buf.st.writeData(p, size)
 
 type Packer = ref object
   buf: PackBuf
@@ -414,63 +415,43 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vFixExt1[0]), 1)
 
+# ------------------------------------------------------------------------------
+
 type UnpackBuf = ref object
-  p: pointer
+  st: Stream
 
-proc inc(buf: UnpackBuf, n:int) =
-  var a = cast[ByteAddress](buf.p)
-  a += n
-  buf.p = cast[pointer](a)
+proc popBe8(buf): byte =
+  cast[byte](buf.st.readInt8)
 
-proc fromBe8(p: pointer): byte =
-  cast[ptr byte](p)[]
-
-proc fromBe16(p: pointer): b16 =
+proc popBe16(buf): b16 =
   var v: b16
+  var tmp = cast[b16](buf.st.readInt16)
   when cpuEndian == littleEndian:
-    swapEndian16(addr(v), p)
+    swapEndian16(addr(v), addr(tmp))
     v
   else:
-    copyMem(addr(v), p, 2)
-    v
+    tmp
 
-proc fromBe32(p: pointer): b32 =
+proc popBe32(buf): b32 =
   var v: b32
+  var tmp = cast[b32](buf.st.readInt32)
   when cpuEndian == littleEndian:
-    swapEndian32(addr(v), p)
+    swapEndian32(addr(v), addr(tmp))
     v
   else:
-    copyMem(addr(v), p, 4)
-    v
+    tmp
 
-proc fromBe64(p: pointer): b64 =
+proc popBe64(buf): b64 =
   var v: b64
+  var tmp = cast[b64](buf.st.readInt64)
   when cpuEndian == littleEndian:
-    swapEndian64(addr(v), p)
+    swapEndian64(addr(v), addr(tmp))
     v
   else:
-    copyMem(addr(v), p, 8)
-    v
-
-proc popBe8(buf): auto =
-  result = fromBe8(buf.p)
-  buf.inc(1)
-
-proc popBe16(buf): auto =
-  result = fromBe16(buf.p)
-  buf.inc(2)
-
-proc popBe32(buf): auto =
-  result = fromBe32(buf.p)
-  buf.inc(4)
-
-proc popBe64(buf): auto =
-  result = fromBe64(buf.p)
-  buf.inc(8)
+    tmp
 
 proc popData(buf: UnpackBuf, p: pointer, size: int) =
-  copyMem(p, buf.p, size)
-  buf.inc(size)
+  discard buf.st.readData(p, size)
 
 type Unpacker = ref object
   buf: UnpackBuf
@@ -620,36 +601,29 @@ proc unpack(upc: Unpacker): Msg =
     assert(false) # not reachable
     Nil
 
-# At the initial release we won't open interfaces
-# other than the followings.
+# ------------------------------------------------------------------------------
 
-proc pack*(msg: Msg): tuple[p: pointer, size: int] =
+proc pack*(st: Stream, msg: Msg) =
   ## Serialize message to byte sequence
-  let packBuf = PackBuf(p: newSeq[byte](128), pos: 0)
-  let pc = mkPacker(packBuf)
+  let buf = PackBuf(st: st)
+  let pc = mkPacker(buf)
   pc.pack(msg)
-  tuple(p: cast[pointer](addr(packBuf.p[0])), size: packBuf.pos)
 
-proc unpack*(p: pointer): Msg =
+proc unpack*(st: Stream): Msg =
   ## Deserialize byte sequence to message
-  let unpackbuf = UnpackBuf(p:p)
-  let upc = mkUnpacker(unpackBuf)
-  upc.unpack()
-
-proc pack*(s: Stream, msg: Msg) =
-  discard
-
-proc unpack*(s: Stream): Msg =
-  discard
+  let buf = UnpackBuf(st: st)
+  let upc = mkUnpacker(buf)
+  upc.unpack
 
 # ------------------------------------------------------------------------------
 
 proc t*(msg: Msg) =
   ## Test by cyclic translation
   let before = $expr(msg)
-  let (p, sz) = pack(msg)
-  discard sz
-  let unpacked = unpack(p)
+  let st = newStringStream()
+  st.pack(msg)
+  st.setPosition(0)
+  let unpacked = st.unpack
   let after = $expr(unpacked)
   assert(before == after)
 
