@@ -46,10 +46,10 @@ type
     mkFalse
     mkPFixNum
     mkNFixNum
-    mkU8
-    mkU16
-    mkU32
-    mkU64
+    mkUInt8
+    mkUInt16
+    mkUInt32
+    mkUInt64
     mkInt8
     mkInt16
     mkInt32
@@ -79,10 +79,10 @@ type
     of mkFalse: nil
     of mkPFixNum: vPFixNum*: uint8
     of mkNFixNum: vNFixNum*: int8
-    of mkU8: vU8*: uint8
-    of mkU16: vU16*: uint16
-    of mkU32: vU32*: uint32
-    of mkU64: vU64*: uint64
+    of mkUInt8: vUInt8*: uint8
+    of mkUInt16: vUInt16*: uint16
+    of mkUInt32: vUInt32*: uint32
+    of mkUInt64: vUInt64*: uint64
     of mkInt8: vInt8*: int8
     of mkInt16: vInt16*: int16
     of mkInt32: vInt32*: int32
@@ -151,17 +151,17 @@ proc NFixNum*(v: int8): Msg =
   assert(-32 <= v and v < 0)
   Msg(kind: mkNFixNum, vNFixNum: v)
 
-proc U8*(v: uint8): Msg =
-  Msg(kind: mkU8, vU8: v)
+proc UInt8*(v: uint8): Msg =
+  Msg(kind: mkUInt8, vUInt8: v)
 
-proc U16*(v: uint16): Msg =
-  Msg(kind: mkU16, vU16: v)
+proc UInt16*(v: uint16): Msg =
+  Msg(kind: mkUInt16, vUInt16: v)
 
-proc U32*(v: uint32): Msg =
-  Msg(kind: mkU32, vU32: v)
+proc UInt32*(v: uint32): Msg =
+  Msg(kind: mkUInt32, vUInt32: v)
 
-proc U64*(v: uint64): Msg =
-  Msg(kind: mkU64, vU64: v)
+proc UInt64*(v: uint64): Msg =
+  Msg(kind: mkUInt64, vUInt64: v)
 
 proc Int8*(v: int8): Msg =
   Msg(kind: mkInt8, vInt8: v)
@@ -336,26 +336,26 @@ proc pack(pc: Packer, msg: Msg) =
     echo "nfixnum"
     buf.ensureMore(1)
     buf.appendHeader(msg.vNFixNum.int)
-  of mkU8:
-    echo "u8"
+  of mkUInt8:
+    echo "uint8"
     buf.ensureMore(1+1)
     buf.appendHeader(0xcc)
-    buf.appendBe8(cast[byte](msg.vU8))
-  of mkU16:
-    echo "u16"
+    buf.appendBe8(cast[byte](msg.vUInt8))
+  of mkUInt16:
+    echo "uint16"
     buf.ensureMore(1+2)
     buf.appendHeader(0xcd)
-    buf.appendBe16(cast[b16](msg.vU16))
-  of mkU32:
-    echo "u32"
+    buf.appendBe16(cast[b16](msg.vUInt16))
+  of mkUInt32:
+    echo "uint32"
     buf.ensureMore(1+4)
     buf.appendHeader(0xce)
-    buf.appendBe32(cast[b32](msg.vU32))
-  of mkU64:
-    echo "u64"
+    buf.appendBe32(cast[b32](msg.vUInt32))
+  of mkUInt64:
+    echo "uint64"
     buf.ensureMore(1+8)
     buf.appendHeader(0xcf)
-    buf.appendBe64(cast[b64](msg.vU64))
+    buf.appendBe64(cast[b64](msg.vUInt64))
   of mkInt8:
     echo "int8"
     buf.ensureMore(1+1)
@@ -574,17 +574,17 @@ proc unpack(upc: Unpacker): Msg =
     echo "nfixnum"
     NFixNum(cast[int8](h))
   of 0xcc:
-    echo "u8"
-    U8(cast[uint8](buf.popBe8))
+    echo "uint8"
+    UInt8(cast[uint8](buf.popBe8))
   of 0xcd:
-    echo "u16"
-    U16(cast[uint16](buf.popBe16))
+    echo "uint16"
+    UInt16(cast[uint16](buf.popBe16))
   of 0xce:
-    echo "u32"
-    U32(cast[uint32](buf.popBe32))
+    echo "uint32"
+    UInt32(cast[uint32](buf.popBe32))
   of 0xcf:
-    echo "u64"
-    U64(cast[uint64](buf.popBe64))
+    echo "uint64"
+    UInt64(cast[uint64](buf.popBe64))
   of 0xd0:
     echo "int8"
     Int8(cast[int8](buf.popBe8))
