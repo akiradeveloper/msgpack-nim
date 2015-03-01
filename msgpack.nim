@@ -3,8 +3,6 @@
 #                     (c) Copyright 2015 Akira hayakawa
 #
 
-# ------------------------------------------------------------------------------
-
 import sequtils
 import streams
 import endians
@@ -22,69 +20,80 @@ type Iterable*[T] = object
 proc len[T](v: Iterable[T]): int =
   v.size
 
+proc toIter[T](v: seq[T]): iterator(): T =
+  return iterator(): T =
+    for e in v:
+      yield e
+
+proc toIterable*[T](v: seq[T]): Iterable[T] =
+  Iterable[T](
+    size: len(v),
+    iter: toIter(v))
+
 type
   MsgKind* = enum
-    mkNil
-    mkFalse
-    mkTrue
     mkFixArray
     mkArray16
     mkArray32
     mkFixMap
     mkMap16
     mkMap32
+    mkNil
+    mkTrue
+    mkFalse
     mkPFixNum
     mkNFixNum
     mkU8
     mkU16
     mkU32
     mkU64
+    mkFloat32
+    mkFloat64
     mkFixStr
     mkStr8
     mkStr16
     mkStr32
-    mkFloat32
-    mkFloat64
-    mkFixExt1
-    mkExt32
     mkBin8
     mkBin16
     mkBin32
-  Msg* = ref MsgObj
-  MsgObj* = object
-    case kind: MsgKind
+    mkFixExt1
+    mkExt32
+  Msg = ref MsgObj
+  MsgObj {.acyclic.} = object
+    case kind*: MsgKind
+    of mkFixArray: vFixArray*: Iterable[Msg]
+    of mkArray16: vArray16*: Iterable[Msg]
+    of mkArray32: vArray32*: Iterable[Msg]
+    of mkFixMap: vFixMap*: Iterable[tuple[key:Msg, val:Msg]]
+    of mkMap16: vMap16*: Iterable[tuple[key:Msg, val:Msg]]
+    of mkMap32: vMap32*: Iterable[tuple[key:Msg, val:Msg]]
     of mkNil: nil
-    of mkFalse: nil
     of mkTrue: nil
-    of mkFixArray: vFixArray: Iterable[Msg]
-    of mkArray16: vArray16: Iterable[Msg]
-    of mkArray32: vArray32: Iterable[Msg]
-    of mkFixMap: vFixMap: Iterable[tuple[key:Msg, val:Msg]]
-    of mkMap16: vMap16: Iterable[tuple[key:Msg, val:Msg]]
-    of mkMap32: vMap32: Iterable[tuple[key:Msg, val:Msg]]
-    of mkPFixNum: vPFixNum: uint8
-    of mkNFixNum: vNFixNum: uint8
-    of mkU8: vU8: uint8
-    of mkU16: vU16: uint16
-    of mkU32: vU32: uint32
-    of mkU64: vU64: uint64
-    of mkFixStr: vFixStr: string
-    of mkStr8: vStr8: string
-    of mkStr16: vStr16: string
-    of mkStr32: vStr32: string
-    of mkFloat32: vFloat32: float32
-    of mkFloat64: vFloat64: float64
-    of mkBin8: vBin8: seq[byte]
-    of mkBin16: vBin16: seq[byte]
-    of mkBin32: vBin32: seq[byte]
-    of mkExt32:
-      typeExt32: uint8
-      vExt32: seq[byte]
+    of mkFalse: nil
+    of mkPFixNum: vPFixNum*: uint8
+    of mkNFixNum: vNFixNum*: uint8
+    of mkU8: vU8*: uint8
+    of mkU16: vU16*: uint16
+    of mkU32: vU32*: uint32
+    of mkU64: vU64*: uint64
+    of mkFloat32: vFloat32*: float32
+    of mkFloat64: vFloat64*: float64
+    of mkFixStr: vFixStr*: string
+    of mkStr8: vStr8*: string
+    of mkStr16: vStr16*: string
+    of mkStr32: vStr32*: string
+    of mkBin8: vBin8*: seq[byte]
+    of mkBin16: vBin16*: seq[byte]
+    of mkBin32: vBin32*: seq[byte]
     of mkFixExt1:
-      typeFixExt1: uint8
-      vFixExt1: seq[byte] # should be array[1, byte]
+      typeFixExt1*: uint8
+      vFixExt1*: seq[byte] # should be array[1, byte]
+    of mkExt32:
+      typeExt32*: uint8
+      vExt32*: seq[byte]
 
 proc `$`(msg: Msg): string
+
 proc `$`[T](xs: Iterable[T]): string =
   var it: iterator(): T
   deepCopy(it, xs.iter)
@@ -93,6 +102,18 @@ proc `$`[T](xs: Iterable[T]): string =
 
 proc `$`(msg: Msg): string =
   $(msg[])
+
+proc FixArray*(v: Iterable[Msg]): Msg =
+  assert(len(v) < 16)
+  Msg(kind: mkFixArray, vFixArray: v)
+
+proc Array16*(v: Iterable[Msg]): Msg =
+  assert(len(v) < (1 shl 16))
+  Msg(kind: mkArray16, vArray16: v)
+
+proc Array32*(v: Iterable[Msg]): Msg =
+  assert(len(v) < (1 shl 32))
+  Msg(kind: mkArray32, vArray32: v)
 
 proc FixMap*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
   assert(len(v) < 16)
@@ -106,41 +127,10 @@ proc Map32*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
   assert(len(v) < (1 shl 32))
   Msg(kind: mkMap32, vMap32: v)
 
-proc Str8*(s: string): Msg =
-  Msg(kind: mkStr8, vStr8: s)
-
-proc Str16*(s: string): Msg =
-  Msg(kind: mkStr16, vStr16: s)
-
-proc Str32*(s: string): Msg =
-  Msg(kind: mkStr32, vStr32: s)
-
 let
   Nil*: Msg = Msg(kind: mkNil)
-  False*: Msg = Msg(kind: mkFalse)
   True*: Msg = Msg(kind: mkTrue)
-
-proc toIter[T](v: seq[T]): iterator(): T =
-  return iterator(): T =
-    for e in v:
-      yield e
-
-proc toIterable*[T](v: seq[T]): Iterable[T] =
-  Iterable[T](
-    size: len(v),
-    iter: toIter(v))
-
-proc FixArray*(v: Iterable[Msg]): Msg =
-  assert(len(v) < 16)
-  Msg(kind: mkFixArray, vFixArray: v)
-
-proc Array16*(v: Iterable[Msg]): Msg =
-  assert(len(v) < (1 shl 16))
-  Msg(kind: mkArray16, vArray16: v)
-
-proc Array32*(v: Iterable[Msg]): Msg =
-  assert(len(v) < (1 shl 32))
-  Msg(kind: mkArray32, vArray32: v)
+  False*: Msg = Msg(kind: mkFalse)
 
 proc PFixNum*(v: uint8): Msg =
   assert(v < 128)
@@ -162,23 +152,24 @@ proc U32*(v: uint32): Msg =
 proc U64*(v: uint64): Msg =
   Msg(kind: mkU64, vU64: v)
 
-proc FixStr*(v: string): Msg =
-  assert(len(v) < 32)
-  Msg(kind: mkFixStr, vFixStr: v)
-
 proc Float32*(v: float32): Msg =
   Msg(kind: mkFloat32, vFloat32: v)
 
 proc Float64*(v: float64): Msg =
   Msg(kind: mkFloat64, vFloat64: v)
 
-proc FixExt1*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) == 1)
-  Msg(kind: mkFixExt1, typeFixExt1: t, vFixExt1: data)
+proc FixStr*(v: string): Msg =
+  assert(len(v) < 32)
+  Msg(kind: mkFixStr, vFixStr: v)
 
-proc Ext32*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) < (1 shl 32))
-  Msg(kind: mkExt32, typeExt32: t, vExt32: data)
+proc Str8*(s: string): Msg =
+  Msg(kind: mkStr8, vStr8: s)
+
+proc Str16*(s: string): Msg =
+  Msg(kind: mkStr16, vStr16: s)
+
+proc Str32*(s: string): Msg =
+  Msg(kind: mkStr32, vStr32: s)
 
 proc Bin8*(v: seq[byte]): Msg =
   assert(len(v) < (1 shl 8))
@@ -191,6 +182,14 @@ proc Bin16*(v: seq[byte]): Msg =
 proc Bin32*(v: seq[byte]): Msg =
   assert(len(v) < (1 shl 32))
   Msg(kind: mkBin32, vBin32: v)
+
+proc FixExt1*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) == 1)
+  Msg(kind: mkFixExt1, typeFixExt1: t, vFixExt1: data)
+
+proc Ext32*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) < (1 shl 32))
+  Msg(kind: mkExt32, typeExt32: t, vExt32: data)
 
 type PackBuf = ref object
   p: seq[byte]
@@ -477,6 +476,7 @@ type Unpacker = ref object
   buf: UnpackBuf
 
 proc unpack(upc: Unpacker): Msg
+
 proc popArray(upc: Unpacker, size: int): Iterable[Msg] =
   Iterable[Msg] (
     size: size,

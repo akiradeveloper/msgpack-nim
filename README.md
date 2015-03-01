@@ -14,21 +14,17 @@ Keep watching!
 
 Checklist:
 
-* ~~positive fix int~~  
-* ~~fixmap~~  
 * ~~fixarray~~  
-* ~~fixstr~~  
+* ~~array 16~~  
+* ~~array 32~~  
+* ~~fixmap~~  
+* ~~map 16~~  
+* ~~map 32~~  
 * ~~nil~~  
-* ~~false~~  
 * ~~true~~  
-* ~~bin 8~~  
-* ~~bin 16~~  
-* ~~bin 32~~  
-* ext 8  
-* ext 16  
-* ~~ext 32~~  
-* ~~float 32~~  
-* ~~float 64~~  
+* ~~false~~  
+* ~~positive fix int~~  
+* ~~negative fixint~~  
 * ~~uint 8~~  
 * ~~uint 16~~  
 * ~~uint 32~~  
@@ -37,19 +33,23 @@ Checklist:
 * int16  
 * int32  
 * int64  
+* ~~float 32~~  
+* ~~float 64~~  
+* ~~fixstr~~  
+* ~~str 8~~  
+* ~~str 16~~  
+* ~~str 32~~  
+* ~~bin 8~~  
+* ~~bin 16~~  
+* ~~bin 32~~  
 * ~~fixext 1~~  
 * fixext 2  
 * fixext 4  
 * fixext 8  
 * fixext 16  
-* ~~str 8~~  
-* ~~str 16~~  
-* ~~str 32~~  
-* ~~array 16~~  
-* ~~array 32~~  
-* ~~map 16~~  
-* ~~map 32~~  
-* ~~negative fixint~~  
+* ext 8  
+* ext 16  
+* ~~ext 32~~  
 
 ### Browse API
 
