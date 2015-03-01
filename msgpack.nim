@@ -74,7 +74,7 @@ type
     of mkTrue: nil
     of mkFalse: nil
     of mkPFixNum: vPFixNum*: uint8
-    of mkNFixNum: vNFixNum*: uint8
+    of mkNFixNum: vNFixNum*: int8
     of mkU8: vU8*: uint8
     of mkU16: vU16*: uint16
     of mkU32: vU32*: uint32
@@ -139,8 +139,8 @@ proc PFixNum*(v: uint8): Msg =
   assert(v < 128)
   Msg(kind: mkPFixNum, vPFixNum: v)
 
-proc NFixNum*(v: uint8): Msg =
-  assert(v < 32)
+proc NFixNum*(v: int8): Msg =
+  assert(-32 <= v and v < 0)
   Msg(kind: mkNFixNum, vNFixNum: v)
 
 proc U8*(v: uint8): Msg =
@@ -314,9 +314,8 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(h)
   of mkNFixNum:
     echo "nfixnum"
-    let h: int = 0xe0 or msg.vNFixNum.int
     buf.ensureMore(1)
-    buf.appendHeader(h)
+    buf.appendHeader(msg.vNFixNum.int)
   of mkU8:
     echo "u8"
     buf.ensureMore(1+1)
@@ -533,8 +532,7 @@ proc unpack(upc: Unpacker): Msg =
     PFixNum(cast[uint8](v.toU8))
   of 0xe0..0xff:
     echo "nfixnum"
-    let v: int = h and 0x1f
-    NFixNum(cast[uint8](v.toU8))
+    NFixNum(cast[int8](h))
   of 0xcc:
     echo "u8"
     U8(cast[uint8](buf.popBe8))
@@ -644,7 +642,7 @@ when isMainModule:
   t(True)
   t(False)
   t(PFixNum(127))
-  t(NFixNum(31))
+  t(NFixNum(-32))
   t(U16(255))
   t(U16(10000))
   t(U32(10000))

@@ -49,7 +49,7 @@ msgShow MsgNil = "Nil"
 msgShow MsgTrue = "True"
 msgShow MsgFalse = "False"
 msgShow (MsgPFixNum n) = "PFixNum(" ++ show n ++ "'u8)"
-msgShow (MsgNFixNum n) = "NFixNum(" ++ show n ++ "'u8)"
+msgShow (MsgNFixNum n) = "NFixNum(" ++ show n ++ "'i8)"
 msgShow (MsgU8 n) = "U8(" ++ show n ++ "'u8)"
 msgShow (MsgU16 n) = "U16(" ++ show n ++ "'u16)"
 msgShow (MsgU32 n) = "U32(" ++ show n ++ "'u32)"
@@ -110,7 +110,7 @@ instance Arbitrary Msg where
       , (vw, return MsgTrue)
       , (vw, return MsgFalse)
       , (vw, liftM MsgPFixNum $ choose (0, maxUS 7))
-      , (vw, liftM MsgNFixNum $ choose (0, maxUS 5))
+      , (vw, liftM MsgNFixNum $ choose (-32, 0))
       , (vw, liftM MsgU8 $ choose (0, maxUS 8))
       , (vw, liftM MsgU16 $ choose (0, maxUS 16))
       , (vw, liftM MsgU32 $ choose (0, maxUS 32))
