@@ -34,6 +34,10 @@ data Msg =
   | MsgBin16 [Int]
   | MsgBin32 [Int]
   | MsgFixExt1 Int [Int]
+  | MsgFixExt2 Int [Int]
+  | MsgFixExt4 Int [Int]
+  | MsgFixExt8 Int [Int]
+  | MsgFixExt16 Int [Int]
   -- fixext1
   -- fixext2
   -- fixext4
@@ -82,6 +86,10 @@ msgShow (MsgBin8 xs) = "Bin8(@[" ++ binShow xs ++ "])"
 msgShow (MsgBin16 xs) = "Bin16(@[" ++ binShow xs ++ "])"
 msgShow (MsgBin32 xs) = "Bin32(@[" ++ binShow xs ++ "])"
 msgShow (MsgFixExt1 t xs) = "FixExt1(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgFixExt2 t xs) = "FixExt2(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgFixExt4 t xs) = "FixExt4(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgFixExt8 t xs) = "FixExt8(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
+msgShow (MsgFixExt16 t xs) = "FixExt16(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
 
 instance Show Msg where
   show = msgShow
@@ -108,7 +116,7 @@ aw = 1
 mw = 1
 
 -- value weight
-vw = 3
+vw = 2
 
 -- max signed
 maxS n = (1 `shiftL` (n - 1)) - 1
@@ -148,6 +156,10 @@ instance Arbitrary Msg where
       , (vw, liftM MsgBin16 $ choose (0, 10) >>= randBinSeq)
       , (vw, liftM MsgBin32 $ choose (0, 10) >>= randBinSeq)
       , (vw, liftM2 MsgFixExt1 (choose (0,255)) $ randBinSeq 1)
+      , (vw, liftM2 MsgFixExt2 (choose (0,255)) $ randBinSeq 2)
+      , (vw, liftM2 MsgFixExt4 (choose (0,255)) $ randBinSeq 4)
+      , (vw, liftM2 MsgFixExt8 (choose (0,255)) $ randBinSeq 8)
+      , (vw, liftM2 MsgFixExt16 (choose (0,255)) $ randBinSeq 16)
       ]
 
 main = do
