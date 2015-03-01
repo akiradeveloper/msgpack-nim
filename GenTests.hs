@@ -33,6 +33,7 @@ data Msg =
   | MsgBin8 [Int]
   | MsgBin16 [Int]
   | MsgBin32 [Int]
+  -- | MsgFixExt1 Int [Int]
   -- fixext1
   -- fixext2
   -- fixext4
@@ -41,6 +42,9 @@ data Msg =
   -- ext8
   -- ext16
   -- ext32
+
+binShow :: [Int] -> String
+binShow xs = intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs
 
 arrayShow :: [Msg] -> String
 arrayShow xs = intercalate "," $ map msgShow xs
@@ -74,9 +78,10 @@ msgShow (MsgFixStr s) = "FixStr(" ++ show s ++ ")"
 msgShow (MsgStr8 s) = "Str8(" ++ show s ++ ")"
 msgShow (MsgStr16 s) = "Str16(" ++ show s ++ ")"
 msgShow (MsgStr32 s) = "Str32(" ++ show s ++ ")"
-msgShow (MsgBin8 xs) = "Bin8(@[" ++ (intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs) ++ "])"
-msgShow (MsgBin16 xs) = "Bin16(@[" ++ (intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs) ++ "])"
-msgShow (MsgBin32 xs) = "Bin32(@[" ++ (intercalate "," $ map (\x -> "cast[byte](" ++ show x ++ ")") xs) ++ "])"
+msgShow (MsgBin8 xs) = "Bin8(@[" ++ binShow xs ++ "])"
+msgShow (MsgBin16 xs) = "Bin16(@[" ++ binShow xs ++ "])"
+msgShow (MsgBin32 xs) = "Bin32(@[" ++ binShow xs ++ "])"
+-- msgShow (MsgFixExt1 t xs) = "FixExt1(" ++ show t ++ ", @[" ++ binShow xs ++ "])"
 
 instance Show Msg where
   show = msgShow
