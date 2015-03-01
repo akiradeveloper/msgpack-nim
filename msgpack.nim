@@ -68,6 +68,8 @@ type
     mkFixExt4
     mkFixExt8
     mkFixExt16
+    mkExt8
+    mkExt16
     mkExt32
   Msg* = ref MsgObj
   MsgObj* {.acyclic.} = object
@@ -115,6 +117,12 @@ type
     of mkFixExt16:
       typeFixExt16*: uint8
       vFixExt16*: seq[byte]
+    of mkExt8:
+      typeExt8*: uint8
+      vExt8*: seq[byte]
+    of mkExt16:
+      typeExt16*: uint8
+      vExt16*: seq[byte]
     of mkExt32:
       typeExt32*: uint8
       vExt32*: seq[byte]
@@ -241,6 +249,14 @@ proc FixExt8*(t: uint8, data: seq[byte]): Msg =
 proc FixExt16*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 16)
   Msg(kind: mkFixExt16, typeFixExt16: t, vFixExt16: data)
+
+proc Ext8*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) < (1 shl 8))
+  Msg(kind: mkExt8, typeExt8: t, vExt8: data)
+
+proc Ext16*(t: uint8, data: seq[byte]): Msg =
+  assert(len(data) < (1 shl 16))
+  Msg(kind: mkExt16, typeExt16: t, vExt16: data)
 
 proc Ext32*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 32))
@@ -509,6 +525,24 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(cast[byte](msg.typeFixExt16))
     var m = msg
     buf.appendData(addr(m.vFixExt16[0]), 16)
+  of mkExt8:
+    echo "ext8"
+    let sz = len(msg.vExt8)
+    buf.ensureMore(1+1+1+sz)
+    buf.appendHeader(0xc7)
+    buf.appendBe8(cast[byte](sz.toU8))
+    buf.appendBe8(cast[byte](msg.typeExt8))
+    var m = msg
+    buf.appendData(addr(m.vExt8[0]), sz)
+  of mkExt16:
+    echo "ext16"
+    let sz = len(msg.vExt16)
+    buf.ensureMore(1+2+1+sz)
+    buf.appendHeader(0xc8)
+    buf.appendBe16(cast[b16](sz.toU16))
+    buf.appendBe8(cast[byte](msg.typeExt16))
+    var m = msg
+    buf.appendData(addr(m.vExt16[0]), sz)
   of mkExt32:
     echo "ext32"
     let sz = len(msg.vExt32)
@@ -735,6 +769,20 @@ proc unpack(upc: Unpacker): Msg =
     var d = newSeq[byte](16)
     buf.popData(addr(d[0]), 16)
     FixExt16(t, d)
+  of 0xc7:
+    echo "ext8"
+    let sz = cast[uint8](buf.popBe8)
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[byte](sz.int)
+    buf.popData(addr(d[0]), sz.int)
+    Ext8(t, d)
+  of 0xc8:
+    echo "ext16"
+    let sz = cast[uint16](buf.popBe16)
+    let t = cast[uint8](buf.popBe8)
+    var d = newSeq[byte](sz.int)
+    buf.popData(addr(d[0]), sz.int)
+    Ext16(t, d)
   of 0xc9:
     echo "ext32"
     let sz = cast[uint32](buf.popBe32)
@@ -806,4 +854,6 @@ when isMainModule:
   t(FixExt4(12, @[cast[byte](1), 2, 3, 4]))
   t(FixExt8(12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8]))
   t(FixExt16(12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]))
+  t(Ext8(12, @[cast[byte](1),2,3]))
+  t(Ext16(12, @[cast[byte](1),2,3]))
   t(Ext32(12, @[cast[byte](1),2,3]))

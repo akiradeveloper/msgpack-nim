@@ -20,6 +20,8 @@ Not yet beta but will be soon.
 
 Checklist:
 
+STATUS: COMPLETE
+
 * ~~fixarray~~  
 * ~~array 16~~  
 * ~~array 32~~  
@@ -49,12 +51,12 @@ Checklist:
 * ~~bin 16~~  
 * ~~bin 32~~  
 * ~~fixext 1~~  
-* fixext 2  
-* fixext 4  
-* fixext 8  
-* fixext 16  
-* ext 8  
-* ext 16  
+* ~~fixext 2~~  
+* ~~fixext 4~~  
+* ~~fixext 8~~  
+* ~~fixext 16~~  
+* ~~ext 8~~  
+* ~~ext 16~~  
 * ~~ext 32~~  
 
 ### Todo

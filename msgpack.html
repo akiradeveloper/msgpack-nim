@@ -1166,7 +1166,8 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   mkFixArray, mkArray16, mkArray32, mkFixMap, mkMap16, mkMap32, mkNil, mkTrue, 
   mkFalse, mkPFixNum, mkNFixNum, mkUInt8, mkUInt16, mkUInt32, mkUInt64, mkInt8, 
   mkInt16, mkInt32, mkInt64, mkFloat32, mkFloat64, mkFixStr, mkStr8, mkStr16, 
-  mkStr32, mkBin8, mkBin16, mkBin32, mkFixExt1, mkExt32"><wbr />Msg<wbr />Kind</a></li>
+  mkStr32, mkBin8, mkBin16, mkBin32, mkFixExt1, mkFixExt2, mkFixExt4, mkFixExt8, 
+  mkFixExt16, mkExt8, mkExt16, mkExt32"><wbr />Msg<wbr />Kind</a></li>
   <li><a class="reference" href="#Msg"
     title="Msg* = ref MsgObj"><wbr />Msg</a></li>
   <li><a class="reference" href="#MsgObj"
@@ -1231,6 +1232,30 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   of mkFixExt1: 
       typeFixExt1*: uint8
       vFixExt1*: seq[byte]
+
+  of mkFixExt2: 
+      typeFixExt2*: uint8
+      vFixExt2*: seq[byte]
+
+  of mkFixExt4: 
+      typeFixExt4*: uint8
+      vFixExt4*: seq[byte]
+
+  of mkFixExt8: 
+      typeFixExt8*: uint8
+      vFixExt8*: seq[byte]
+
+  of mkFixExt16: 
+      typeFixExt16*: uint8
+      vFixExt16*: seq[byte]
+
+  of mkExt8: 
+      typeExt8*: uint8
+      vExt8*: seq[byte]
+
+  of mkExt16: 
+      typeExt16*: uint8
+      vExt16*: seq[byte]
 
   of mkExt32: 
       typeExt32*: uint8
@@ -1307,6 +1332,18 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     title="Bin32*(v: seq[byte]): Msg"><wbr />Bin32</a></li>
   <li><a class="reference" href="#FixExt1,uint8,seq[byte]"
     title="FixExt1*(t: uint8; data: seq[byte]): Msg"><wbr />Fix<wbr />Ext1</a></li>
+  <li><a class="reference" href="#FixExt2,uint8,seq[byte]"
+    title="FixExt2*(t: uint8; data: seq[byte]): Msg"><wbr />Fix<wbr />Ext2</a></li>
+  <li><a class="reference" href="#FixExt4,uint8,seq[byte]"
+    title="FixExt4*(t: uint8; data: seq[byte]): Msg"><wbr />Fix<wbr />Ext4</a></li>
+  <li><a class="reference" href="#FixExt8,uint8,seq[byte]"
+    title="FixExt8*(t: uint8; data: seq[byte]): Msg"><wbr />Fix<wbr />Ext8</a></li>
+  <li><a class="reference" href="#FixExt16,uint8,seq[byte]"
+    title="FixExt16*(t: uint8; data: seq[byte]): Msg"><wbr />Fix<wbr />Ext16</a></li>
+  <li><a class="reference" href="#Ext8,uint8,seq[byte]"
+    title="Ext8*(t: uint8; data: seq[byte]): Msg"><wbr />Ext8</a></li>
+  <li><a class="reference" href="#Ext16,uint8,seq[byte]"
+    title="Ext16*(t: uint8; data: seq[byte]): Msg"><wbr />Ext16</a></li>
   <li><a class="reference" href="#Ext32,uint8,seq[byte]"
     title="Ext32*(t: uint8; data: seq[byte]): Msg"><wbr />Ext32</a></li>
   <li><a class="reference" href="#pack,Stream,Msg"
@@ -1344,7 +1381,8 @@ Basically an iterator but having explicit finite size
   <span class="Identifier">mkFixArray</span><span class="Other">,</span> <span class="Identifier">mkArray16</span><span class="Other">,</span> <span class="Identifier">mkArray32</span><span class="Other">,</span> <span class="Identifier">mkFixMap</span><span class="Other">,</span> <span class="Identifier">mkMap16</span><span class="Other">,</span> <span class="Identifier">mkMap32</span><span class="Other">,</span> <span class="Identifier">mkNil</span><span class="Other">,</span> <span class="Identifier">mkTrue</span><span class="Other">,</span> 
   <span class="Identifier">mkFalse</span><span class="Other">,</span> <span class="Identifier">mkPFixNum</span><span class="Other">,</span> <span class="Identifier">mkNFixNum</span><span class="Other">,</span> <span class="Identifier">mkUInt8</span><span class="Other">,</span> <span class="Identifier">mkUInt16</span><span class="Other">,</span> <span class="Identifier">mkUInt32</span><span class="Other">,</span> <span class="Identifier">mkUInt64</span><span class="Other">,</span> <span class="Identifier">mkInt8</span><span class="Other">,</span> 
   <span class="Identifier">mkInt16</span><span class="Other">,</span> <span class="Identifier">mkInt32</span><span class="Other">,</span> <span class="Identifier">mkInt64</span><span class="Other">,</span> <span class="Identifier">mkFloat32</span><span class="Other">,</span> <span class="Identifier">mkFloat64</span><span class="Other">,</span> <span class="Identifier">mkFixStr</span><span class="Other">,</span> <span class="Identifier">mkStr8</span><span class="Other">,</span> <span class="Identifier">mkStr16</span><span class="Other">,</span> 
-  <span class="Identifier">mkStr32</span><span class="Other">,</span> <span class="Identifier">mkBin8</span><span class="Other">,</span> <span class="Identifier">mkBin16</span><span class="Other">,</span> <span class="Identifier">mkBin32</span><span class="Other">,</span> <span class="Identifier">mkFixExt1</span><span class="Other">,</span> <span class="Identifier">mkExt32</span></pre></dt>
+  <span class="Identifier">mkStr32</span><span class="Other">,</span> <span class="Identifier">mkBin8</span><span class="Other">,</span> <span class="Identifier">mkBin16</span><span class="Other">,</span> <span class="Identifier">mkBin32</span><span class="Other">,</span> <span class="Identifier">mkFixExt1</span><span class="Other">,</span> <span class="Identifier">mkFixExt2</span><span class="Other">,</span> <span class="Identifier">mkFixExt4</span><span class="Other">,</span> <span class="Identifier">mkFixExt8</span><span class="Other">,</span> 
+  <span class="Identifier">mkFixExt16</span><span class="Other">,</span> <span class="Identifier">mkExt8</span><span class="Other">,</span> <span class="Identifier">mkExt16</span><span class="Other">,</span> <span class="Identifier">mkExt32</span></pre></dt>
 <dd>
 
 
@@ -1415,6 +1453,30 @@ Basically an iterator but having explicit finite size
   <span class="Keyword">of</span> <span class="Identifier">mkFixExt1</span><span class="Other">:</span> 
       <span class="Identifier">typeFixExt1</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
       <span class="Identifier">vFixExt1</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  <span class="Keyword">of</span> <span class="Identifier">mkFixExt2</span><span class="Other">:</span> 
+      <span class="Identifier">typeFixExt2</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vFixExt2</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  <span class="Keyword">of</span> <span class="Identifier">mkFixExt4</span><span class="Other">:</span> 
+      <span class="Identifier">typeFixExt4</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vFixExt4</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  <span class="Keyword">of</span> <span class="Identifier">mkFixExt8</span><span class="Other">:</span> 
+      <span class="Identifier">typeFixExt8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vFixExt8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  <span class="Keyword">of</span> <span class="Identifier">mkFixExt16</span><span class="Other">:</span> 
+      <span class="Identifier">typeFixExt16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vFixExt16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  <span class="Keyword">of</span> <span class="Identifier">mkExt8</span><span class="Other">:</span> 
+      <span class="Identifier">typeExt8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vExt8</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
+
+  <span class="Keyword">of</span> <span class="Identifier">mkExt16</span><span class="Other">:</span> 
+      <span class="Identifier">typeExt16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
+      <span class="Identifier">vExt16</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span>
 
   <span class="Keyword">of</span> <span class="Identifier">mkExt32</span><span class="Other">:</span> 
       <span class="Identifier">typeExt32</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint8</span>
@@ -1585,6 +1647,36 @@ Basically an iterator but having explicit finite size
 
 
 </dd>
+<dt id="FixExt2"><a name="FixExt2,uint8,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">FixExt2</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">t</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="FixExt4"><a name="FixExt4,uint8,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">FixExt4</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">t</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="FixExt8"><a name="FixExt8,uint8,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">FixExt8</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">t</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="FixExt16"><a name="FixExt16,uint8,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">FixExt16</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">t</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="Ext8"><a name="Ext8,uint8,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Ext8</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">t</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="Ext16"><a name="Ext16,uint8,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Ext16</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">t</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
 <dt id="Ext32"><a name="Ext32,uint8,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Ext32</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">t</span><span class="Other">:</span> <span class="Identifier">uint8</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
 <dd>
 
@@ -1615,7 +1707,7 @@ Test by cyclic translation. Don't use.
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-03-01 19:44:23 UTC</small>
+        <small>Made with Nim. Generated: 2015-03-01 21:33:44 UTC</small>
       </div>
     </div>
   </div>

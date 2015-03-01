@@ -34,6 +34,12 @@ data Msg =
   | MsgBin16 [Int]
   | MsgBin32 [Int]
   -- fixext1
+  -- fixext2
+  -- fixext4
+  -- fixext8
+  -- fixext16
+  -- ext8
+  -- ext16
   -- ext32
 
 arrayShow :: [Msg] -> String
