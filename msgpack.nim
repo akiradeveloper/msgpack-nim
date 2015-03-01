@@ -11,16 +11,19 @@ import endians
 import unsigned
 
 type
- b16 = int16
- b32 = int32
- b64 = int64
+  b16 = int16
+  b32 = int32
+  b64 = int64
 
-type Iterable[T] = object
-  size: int
-  iter: iterator(): T
+type Iterable*[T] = object
+  size*: int
+  iter*: iterator(): T
+
+proc len[T](v: Iterable[T]): int =
+  v.size
 
 type
-  MsgKind = enum
+  MsgKind* = enum
     mkNil
     mkFalse
     mkTrue
@@ -47,15 +50,15 @@ type
     mkBin8
     mkBin16
     mkBin32
-  Msg = ref MsgObj
-  MsgObj = object
+  Msg* = ref MsgObj
+  MsgObj* = object
     case kind: MsgKind
     of mkNil: nil
     of mkFalse: nil
     of mkTrue: nil
     of mkFixArray: vFixArray: Iterable[Msg]
-    of mkArray16: vArray16: seq[Msg]
-    of mkArray32: vArray32: seq[Msg]
+    of mkArray16: vArray16: Iterable[Msg]
+    of mkArray32: vArray32: Iterable[Msg]
     of mkFixMap: vFixMap: seq[tuple[key:Msg, val:Msg]]
     of mkMap16: vMap16: seq[tuple[key:Msg, val:Msg]]
     of mkMap32: vMap32: seq[tuple[key:Msg, val:Msg]]
@@ -122,14 +125,14 @@ proc toIterable*[T](v: seq[T]): Iterable[T] =
     iter: toIter(v))
 
 proc FixArray*(v: Iterable[Msg]): Msg =
-  assert(v.size < 16)
+  assert(len(v) < 16)
   Msg(kind: mkFixArray, vFixArray: v)
 
-proc Array16*(v: seq[Msg]): Msg =
+proc Array16*(v: Iterable[Msg]): Msg =
   assert(len(v) < (1 shl 16))
   Msg(kind: mkArray16, vArray16: v)
 
-proc Array32*(v: seq[Msg]): Msg =
+proc Array32*(v: Iterable[Msg]): Msg =
   assert(len(v) < (1 shl 32))
   Msg(kind: mkArray32, vArray32: v)
 
@@ -232,8 +235,8 @@ proc mkPacker(buf: PackBuf): Packer =
 
 proc pack(pc: Packer, msg: Msg)
 
-proc appendArray(pc: Packer, xs: seq[Msg]) =
-  for e in xs:
+proc appendArray(pc: Packer, xs: Iterable[Msg]) =
+  for e in xs.iter():
     pc.pack(e)
 
 proc appendMap(pc: Packer, map: seq[tuple[key:Msg, val:Msg]]) =
@@ -285,8 +288,7 @@ proc pack(pc: Packer, msg: Msg) =
     let h: int = 0x90 or msg.vFixArray.size
     buf.ensureMore(1)
     buf.appendHeader(h)
-    for e in msg.vFixArray.iter():
-      pc.pack(e)
+    pc.appendArray(msg.vFixArray)
   of mkArray16:
     echo "array16"
     let sz = len(msg.vArray16)
@@ -468,18 +470,18 @@ proc popBe64(buf): auto =
 proc popData(buf: UnpackBuf, p: pointer, size: int) =
   copyMem(p, buf.p, size)
   buf.inc(size)
-  
 
 type Unpacker = ref object
   buf: UnpackBuf
 
 proc unpack(upc: Unpacker): Msg
-
-proc popArray(upc: Unpacker, size: int): seq[Msg] =
-  var v: seq[Msg] = @[]
-  for i in 0..(size-1):
-    v.add(upc.unpack)
-  v
+proc popArray(upc: Unpacker, size: int): Iterable[Msg] =
+  Iterable[Msg] (
+    size: size,
+    iter: iterator(): Msg =
+      for i in 0..(size-1):
+        yield upc.unpack
+  )
 
 proc popMap(upc: Unpacker, size: int): seq[tuple[key:Msg, val:Msg]] =
   var v: seq[tuple[key: Msg, val:Msg]] = @[]
@@ -532,7 +534,7 @@ proc unpack(upc: Unpacker): Msg =
     let it = iterator(): Msg =
       for i in 0..(sz-1):
         yield (upc.unpack)
-    Msg(kind: mkFixArray, vFixArray: Iterable[Msg](size: sz, iter: it))
+    FixArray(upc.popArray(sz.int))
   of 0xdc:
     echo "array16"
     let sz = cast[uint16](buf.popBe16)
@@ -652,8 +654,8 @@ when isMainModule:
   t(False)
   t(True)
   t(FixArray(toIterable(@[True, False])))
-  t(Array16(@[True, False]))
-  t(Array32(@[True, False]))
+  t(Array16(toIterable(@[True, False])))
+  t(Array32(toIterable(@[True, False])))
   t(PFixNum(127))
   t(NFixNum(31))
   t(U16(255))
