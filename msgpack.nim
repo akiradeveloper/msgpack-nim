@@ -36,6 +36,8 @@ proc toIterable*[T](v: seq[T]): Iterable[T] =
     iter: toIter(v)
   )
 
+type ExtObj* = tuple[a:uint8, b:seq[byte]]
+
 type
   MsgKind* = enum
     mkFixArray
@@ -105,30 +107,14 @@ type
     of mkBin8: vBin8*: seq[byte]
     of mkBin16: vBin16*: seq[byte]
     of mkBin32: vBin32*: seq[byte]
-    of mkFixExt1: # should be having tuple?
-      typeFixExt1*: uint8
-      vFixExt1*: seq[byte]
-    of mkFixExt2:
-      typeFixExt2*: uint8
-      vFixExt2*: seq[byte]
-    of mkFixExt4:
-      typeFixExt4*: uint8
-      vFixExt4*: seq[byte]
-    of mkFixExt8:
-      typeFixExt8*: uint8
-      vFixExt8*: seq[byte]
-    of mkFixExt16:
-      typeFixExt16*: uint8
-      vFixExt16*: seq[byte]
-    of mkExt8:
-      typeExt8*: uint8
-      vExt8*: seq[byte]
-    of mkExt16:
-      typeExt16*: uint8
-      vExt16*: seq[byte]
-    of mkExt32:
-      typeExt32*: uint8
-      vExt32*: seq[byte]
+    of mkFixExt1: vFixExt1: ExtObj
+    of mkFixExt2: vFixExt2: ExtObj
+    of mkFixExt4: vFixExt4: ExtObj
+    of mkFixExt8: vFixExt8: ExtObj
+    of mkFixExt16: vFixExt16: ExtObj
+    of mkExt8: vExt8: ExtObj
+    of mkExt16: vExt16: ExtObj
+    of mkExt32: vExt32: ExtObj
 
 proc `$`(msg: Msg): string
 
@@ -241,35 +227,35 @@ proc Bin32*(v: seq[byte]): Msg =
 
 proc FixExt1*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 1)
-  Msg(kind: mkFixExt1, typeFixExt1: t, vFixExt1: data)
+  Msg(kind: mkFixExt1, vFixExt1: (t, data))
 
 proc FixExt2*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 2)
-  Msg(kind: mkFixExt2, typeFixExt2: t, vFixExt2: data)
+  Msg(kind: mkFixExt2, vFixExt2: (t, data))
 
 proc FixExt4*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 4)
-  Msg(kind: mkFixExt4, typeFixExt4: t, vFixExt4: data)
+  Msg(kind: mkFixExt4, vFixExt4: (t, data))
 
 proc FixExt8*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 8)
-  Msg(kind: mkFixExt8, typeFixExt8: t, vFixExt8: data)
+  Msg(kind: mkFixExt8, vFixExt8: (t, data))
 
 proc FixExt16*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) == 16)
-  Msg(kind: mkFixExt16, typeFixExt16: t, vFixExt16: data)
+  Msg(kind: mkFixExt16, vFixExt16: (t, data))
 
 proc Ext8*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 8))
-  Msg(kind: mkExt8, typeExt8: t, vExt8: data)
+  Msg(kind: mkExt8, vExt8: (t, data))
 
 proc Ext16*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 16))
-  Msg(kind: mkExt16, typeExt16: t, vExt16: data)
+  Msg(kind: mkExt16, vExt16: (t, data))
 
 proc Ext32*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 32))
-  Msg(kind: mkExt32, typeExt32: t, vExt32: data)
+  Msg(kind: mkExt32, vExt32: (t, data))
 
 {.pop.}
 
@@ -505,64 +491,72 @@ proc pack(pc: Packer, msg: Msg) =
     echo "fixext1"
     buf.ensureMore(3)
     buf.appendHeader(0xd4)
-    buf.appendBe8(cast[byte](msg.typeFixExt1))
+    var (a, b) = msg.vFixExt1
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vFixExt1[0]), 1)
+    buf.appendData(addr(b[0]), 1)
   of mkFixExt2:
     echo "fixext2"
     buf.ensureMore(4)
     buf.appendHeader(0xd5)
-    buf.appendBe8(cast[byte](msg.typeFixExt2))
+    var (a, b) = msg.vFixExt2
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vFixExt2[0]), 2)
+    buf.appendData(addr(b[0]), 2)
   of mkFixExt4:
     echo "fixext4"
     buf.ensureMore(6)
     buf.appendHeader(0xd6)
-    buf.appendBe8(cast[byte](msg.typeFixExt4))
+    var (a, b) = msg.vFixExt4
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vFixExt4[0]), 4)
+    buf.appendData(addr(b[0]), 4)
   of mkFixExt8:
     echo "fixext8"
     buf.ensureMore(10)
     buf.appendHeader(0xd7)
-    buf.appendBe8(cast[byte](msg.typeFixExt8))
+    var (a, b) = msg.vFixExt8
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vFixExt8[0]), 8)
+    buf.appendData(addr(b[0]), 8)
   of mkFixExt16:
     echo "fixext16"
     buf.ensureMore(18)
     buf.appendHeader(0xd8)
-    buf.appendBe8(cast[byte](msg.typeFixExt16))
+    var (a, b) = msg.vFixExt16
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vFixExt16[0]), 16)
+    buf.appendData(addr(b[0]), 16)
   of mkExt8:
     echo "ext8"
-    let sz = len(msg.vExt8)
+    var (a, b) = msg.vExt8
+    let sz = len(b)
     buf.ensureMore(1+1+1+sz)
     buf.appendHeader(0xc7)
     buf.appendBe8(cast[byte](sz.toU8))
-    buf.appendBe8(cast[byte](msg.typeExt8))
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vExt8[0]), sz)
+    buf.appendData(addr(b[0]), sz)
   of mkExt16:
     echo "ext16"
-    let sz = len(msg.vExt16)
+    var (a, b) = msg.vExt16
+    let sz = len(b)
     buf.ensureMore(1+2+1+sz)
     buf.appendHeader(0xc8)
     buf.appendBe16(cast[b16](sz.toU16))
-    buf.appendBe8(cast[byte](msg.typeExt16))
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vExt16[0]), sz)
+    buf.appendData(addr(b[0]), sz)
   of mkExt32:
     echo "ext32"
-    let sz = len(msg.vExt32)
+    var (a, b) = msg.vExt32
+    let sz = len(b)
     buf.ensureMore(1+4+1+sz)
     buf.appendHeader(0xc9)
     buf.appendBe32(cast[b32](sz.toU32))
-    buf.appendBe8(cast[byte](msg.typeExt32))
+    buf.appendBe8(cast[byte](a))
     var m = msg
-    buf.appendData(addr(m.vExt32[0]), sz)
+    buf.appendData(addr(b[0]), sz)
 
 # ------------------------------------------------------------------------------
 
