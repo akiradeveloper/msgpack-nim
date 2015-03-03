@@ -105,7 +105,7 @@ type
     of mkBin8: vBin8*: seq[byte]
     of mkBin16: vBin16*: seq[byte]
     of mkBin32: vBin32*: seq[byte]
-    of mkFixExt1:
+    of mkFixExt1: # should be having tuple?
       typeFixExt1*: uint8
       vFixExt1*: seq[byte]
     of mkFixExt2:
@@ -143,6 +143,9 @@ proc `$`[T](xs: Iterable[T]): string =
 proc `$`(msg: Msg): string =
   $(msg[])
 
+# Factory methods should be inlined
+{.push inline.}
+
 proc FixArray*(v: Iterable[Msg]): Msg =
   assert(len(v) < 16)
   Msg(kind: mkFixArray, vFixArray: v)
@@ -172,6 +175,7 @@ let
   True* = Msg(kind: mkTrue)
   False* = Msg(kind: mkFalse)
 
+# Compile type check that v is 7 bit?
 proc PFixNum*(v: uint8): Msg =
   assert(v < 128)
   Msg(kind: mkPFixNum, vPFixNum: v)
@@ -266,6 +270,8 @@ proc Ext16*(t: uint8, data: seq[byte]): Msg =
 proc Ext32*(t: uint8, data: seq[byte]): Msg =
   assert(len(data) < (1 shl 32))
   Msg(kind: mkExt32, typeExt32: t, vExt32: data)
+
+{.pop.}
 
 # ------------------------------------------------------------------------------
 
