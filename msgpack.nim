@@ -13,8 +13,12 @@ type
   b32 = int32
   b64 = int64
 
+# Get this to upstream. I don't want to hold this.
 type Iterable*[T] = object
   ## Basically an iterator but having explicit finite size
+  ## Why we use iterator instead of seq is the laziness makes it
+  ## possible to deserialize stream that's large enough to cause
+  ## out-of-memory error.
   size*: int
   iter*: iterator(): T
 
@@ -134,6 +138,8 @@ proc `$`[T](xs: Iterable[T]): string =
   let s = toSeq(it())
   $s
 
+# Traversing on a iterator is a destructive operation
+# that doesn't comform to `$` semantics. So keep this internal.
 proc `$`(msg: Msg): string =
   $(msg[])
 
