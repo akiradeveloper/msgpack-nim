@@ -8,6 +8,11 @@ import streams
 import endians
 import unsigned
 
+#
+# MessagePack Core
+# Type, Pack/Unpack
+#
+
 type
   b16 = int16
   b32 = int32
@@ -258,6 +263,24 @@ proc Ext32*(t: uint8, data: seq[byte]): Msg =
   Msg(kind: mkExt32, vExt32: (t, data))
 
 {.pop.}
+
+proc compInt(x: int): Msg =
+  ## Given x of int and returns a Msg object
+  ## that is most compression-effective.
+  if 0 <= x:
+    if x <= 0b01111111:
+      PFixNum(cast[uint8](x.toU8))
+    elif x <= 0xff:
+      UInt8(cast[uint8](x.toU8))
+    elif x <= 0xffff:
+      UInt16(cast[uint16](x.toU16))
+    elif x <= 0xffffffff:
+      UInt32(cast[uint32](x.toU32))
+    else:
+      UInt64(x.uint64)
+  else:
+    # TODO
+    Int64(x.int64)
 
 # ------------------------------------------------------------------------------
 
@@ -812,6 +835,12 @@ proc unpack*(st: Stream): Msg =
   let buf = UnpackBuf(st: st)
   let upc = mkUnpacker(buf)
   upc.unpack
+
+# ------------------------------------------------------------------------------
+
+#
+# MessagePack-RPC
+#
 
 # ------------------------------------------------------------------------------
 
