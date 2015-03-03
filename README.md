@@ -14,7 +14,14 @@ to see what happens (It will take a bit while. Be patient). Have a nice packing!
 
 ![Overview](https://rawgit.com/akiradeveloper/msgpack-nim/master/overview.svg)
 
-### Example
+## Install
+
+```sh
+$ nimble update
+$ nimble msgpack
+```
+
+## Example
 
 ```nimrod
 import msgpack
@@ -50,7 +57,7 @@ for k, v in msg.vFixMap.iter():
       assert(false)
 ```
 
-### Todo
+## Todo
 
 * Implement Messagepack-RPC  
 * Implement nim object to/from Msg object translation (but I am a bit skeptical about this idea of
@@ -59,6 +66,6 @@ for k, v in msg.vFixMap.iter():
 * Talk with offical Ruby implementation  
 * Don't repeat yourself: The code now has too much duplications. Using templates?  
 
-### Author
+## Author
 
 Akira Hayakawa (ruby.wktk@gmail.com)
