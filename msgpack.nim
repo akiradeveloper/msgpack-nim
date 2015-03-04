@@ -655,9 +655,6 @@ proc unpack(upc: Unpacker): Msg =
   of 0x90..0x9f:
     echo "fixarray"
     let sz: int = h and 0x0f
-    let it = iterator(): Msg =
-      for i in 0..(sz-1):
-        yield (upc.unpack)
     FixArray(upc.popArray(sz.int))
   of 0xdc:
     echo "array16"
