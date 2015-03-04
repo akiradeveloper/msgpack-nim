@@ -18,29 +18,6 @@ type
   b32 = int32
   b64 = int64
 
-# Get this to upstream. I don't want to hold this.
-type Iterable*[T] = object
-  ## Basically an iterator but having explicit finite size
-  ## Why we use iterator instead of seq is the laziness makes it
-  ## possible to deserialize stream that's large enough to cause
-  ## out-of-memory error.
-  size*: int
-  iter*: iterator(): T
-
-proc len[T](v: Iterable[T]): int =
-  v.size
-
-proc toIter[T](v: seq[T]): iterator(): T =
-  return iterator(): T =
-    for e in v:
-      yield e
-
-proc toIterable*[T](v: seq[T]): Iterable[T] =
-  Iterable[T](
-    size: len(v),
-    iter: toIter(v)
-  )
-
 type ExtObj* = tuple[a:uint8, b:seq[byte]]
 
 type
@@ -84,12 +61,12 @@ type
   Msg* = ref MsgObj
   MsgObj* {.acyclic.} = object
     case kind*: MsgKind
-    of mkFixArray: vFixArray*: Iterable[Msg]
-    of mkArray16: vArray16*: Iterable[Msg]
-    of mkArray32: vArray32*: Iterable[Msg]
-    of mkFixMap: vFixMap*: Iterable[tuple[key:Msg, val:Msg]]
-    of mkMap16: vMap16*: Iterable[tuple[key:Msg, val:Msg]]
-    of mkMap32: vMap32*: Iterable[tuple[key:Msg, val:Msg]]
+    of mkFixArray: vFixArray*: seq[Msg]
+    of mkArray16: vArray16*: seq[Msg]
+    of mkArray32: vArray32*: seq[Msg]
+    of mkFixMap: vFixMap*: seq[tuple[key:Msg, val:Msg]]
+    of mkMap16: vMap16*: seq[tuple[key:Msg, val:Msg]]
+    of mkMap32: vMap32*: seq[tuple[key:Msg, val:Msg]]
     of mkNil: nil
     of mkTrue: nil
     of mkFalse: nil
@@ -121,43 +98,33 @@ type
     of mkExt16: vExt16: ExtObj
     of mkExt32: vExt32: ExtObj
 
-proc `$`(msg: Msg): string
-
-proc `$`[T](xs: Iterable[T]): string =
-  var it: iterator(): T
-  deepCopy(it, xs.iter)
-  let s = toSeq(it())
-  $s
-
-# Traversing on a iterator is a destructive operation
-# that doesn't comform to `$` semantics. So keep this internal.
 proc `$`(msg: Msg): string =
   $(msg[])
 
 # Factory methods should be inlined
 {.push inline.}
 
-proc FixArray*(v: Iterable[Msg]): Msg =
+proc FixArray*(v: seq[Msg]): Msg =
   assert(len(v) < 16)
   Msg(kind: mkFixArray, vFixArray: v)
 
-proc Array16*(v: Iterable[Msg]): Msg =
+proc Array16*(v: seq[Msg]): Msg =
   assert(len(v) < (1 shl 16))
   Msg(kind: mkArray16, vArray16: v)
 
-proc Array32*(v: Iterable[Msg]): Msg =
+proc Array32*(v: seq[Msg]): Msg =
   assert(len(v) < (1 shl 32))
   Msg(kind: mkArray32, vArray32: v)
 
-proc FixMap*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
+proc FixMap*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
   assert(len(v) < 16)
   Msg(kind: mkFixMap, vFixMap: v)
 
-proc Map16*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
+proc Map16*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
   assert(len(v) < (1 shl 16))
   Msg(kind: mkMap16, vMap16: v)
 
-proc Map32*(v: Iterable[tuple[key: Msg, val: Msg]]): Msg =
+proc Map32*(v: seq[tuple[key: Msg, val: Msg]]): Msg =
   assert(len(v) < (1 shl 32))
   Msg(kind: mkMap32, vMap32: v)
 
@@ -330,12 +297,12 @@ proc mkPacker(buf: PackBuf): Packer =
 
 proc pack(pc: Packer, msg: Msg)
 
-proc appendArray(pc: Packer, xs: Iterable[Msg]) =
-  for e in xs.iter():
+proc appendArray(pc: Packer, xs: seq[Msg]) =
+  for e in xs:
     pc.pack(e)
 
-proc appendMap(pc: Packer, map: Iterable[tuple[key:Msg, val:Msg]]) =
-  for e in map.iter():
+proc appendMap(pc: Packer, map: seq[tuple[key:Msg, val:Msg]]) =
+  for e in map:
     pc.pack(e.key)
     pc.pack(e.val)
 
@@ -344,7 +311,7 @@ proc pack(pc: Packer, msg: Msg) =
   case msg.kind:
   of mkFixArray:
     echo "fixarray"
-    let h: int = 0x90 or msg.vFixArray.size
+    let h: int = 0x90 or len(msg.vFixArray)
     buf.ensureMore(1)
     buf.appendHeader(h)
     pc.appendArray(msg.vFixArray)
@@ -624,21 +591,15 @@ type Unpacker = ref object
 
 proc unpack(upc: Unpacker): Msg
 
-proc popArray(upc: Unpacker, size: int): Iterable[Msg] =
-  Iterable[Msg] (
-    size: size,
-    iter: iterator(): Msg =
-      for i in 0..(size-1):
-        yield upc.unpack
-  )
-
-proc popMap(upc: Unpacker, size: int): Iterable[tuple[key:Msg, val:Msg]] =
-  Iterable[tuple[key:Msg, val:Msg]] (
-    size: size,
-    iter: iterator(): tuple[key:Msg, val:Msg] =
-      for i in 0..(size-1):
-        yield (upc.unpack, upc.unpack)
-  )
+proc popArray(upc: Unpacker, size: int): seq[Msg] =
+  result = newSeq[Msg](size)
+  for i in 0..(size-1):
+    result[i] = upc.unpack
+  
+proc popMap(upc: Unpacker, size: int): seq[tuple[key:Msg, val:Msg]] =
+  result = newSeq[tuple[key:Msg, val:Msg]](size)
+  for i in 0..(size-1):
+    result[i] = (upc.unpack, upc.unpack)
 
 proc mkUnpacker(buf: UnpackBuf): Unpacker =
   Unpacker (
@@ -846,7 +807,9 @@ proc t*(msg: Msg) =
   let before = $expr(msg)
   echo before
   let st = newStringStream()
+  assert(st.getPosition == 0)
   st.pack(msg)
+  assert(st.getPosition != 0)
   st.setPosition(0)
   let unpacked = st.unpack
   let after = $expr(unpacked)
@@ -854,12 +817,12 @@ proc t*(msg: Msg) =
   assert(before == after)
 
 when isMainModule:
-  t(FixArray(toIterable(@[True, False])))
-  t(Array16(toIterable(@[True, False])))
-  t(Array32(toIterable(@[True, False])))
-  t(FixMap(toIterable(@[(Nil,True),(False,UInt16(1))])))
-  t(Map16(toIterable(@[(Nil,True),(False,UInt16(1))])))
-  t(Map32(toIterable(@[(Nil,True),(False,UInt16(1))])))
+  t(FixArray(@[True, False]))
+  t(Array16(@[True, False]))
+  t(Array32(@[True, False]))
+  t(FixMap(@[(Nil,True),(False,UInt16(1))]))
+  t(Map16(@[(Nil,True),(False,UInt16(1))]))
+  t(Map32(@[(Nil,True),(False,UInt16(1))]))
   t(Nil)
   t(True)
   t(False)
@@ -891,5 +854,5 @@ when isMainModule:
   t(Ext16(12, @[cast[byte](1),2,3]))
   t(Ext32(12, @[cast[byte](1),2,3]))
 
-  t(FixArray(toIterable(@[FixArray(toIterable(@[True, False])), PFixNum(18)])))
-  # t(FixArray(toIterable(@[FixArray(toIterable(@[True, False])), FixArray(toIterable(@[True, False]))])))
+  t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
+  # t(FixArray(toseq(@[FixArray(toseq(@[True, False])), FixArray(toseq(@[True, False]))])))

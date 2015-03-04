@@ -52,12 +52,12 @@ mapShow :: [(Msg, Msg)] -> String
 mapShow xs = intercalate "," $ map (\(k, v) -> "(" ++ msgShow k ++ "," ++  msgShow v ++ ")") xs
 
 msgShow :: Msg -> String
-msgShow (MsgFixArray xs) = "FixArray(toIterable(@[" ++ arrayShow xs ++ "]))"
-msgShow (MsgArray16 xs) = "Array16(toIterable(@[" ++ arrayShow xs ++ "]))"
-msgShow (MsgArray32 xs) = "Array32(toIterable(@[" ++ arrayShow xs ++ "]))"
-msgShow (MsgFixMap xs) = "FixMap(toIterable(@[" ++ mapShow xs ++ "]))"
-msgShow (MsgMap16 xs) = "Map16(toIterable(@[" ++ mapShow xs ++ "]))"
-msgShow (MsgMap32 xs) = "Map32(toIterable(@[" ++ mapShow xs ++ "]))"
+msgShow (MsgFixArray xs) = "FixArray(@[" ++ arrayShow xs ++ "])"
+msgShow (MsgArray16 xs) = "Array16(@[" ++ arrayShow xs ++ "])"
+msgShow (MsgArray32 xs) = "Array32(@[" ++ arrayShow xs ++ "])"
+msgShow (MsgFixMap xs) = "FixMap(@[" ++ mapShow xs ++ "])"
+msgShow (MsgMap16 xs) = "Map16(@[" ++ mapShow xs ++ "])"
+msgShow (MsgMap32 xs) = "Map32(@[" ++ mapShow xs ++ "])"
 msgShow MsgNil = "Nil"
 msgShow MsgTrue = "True"
 msgShow MsgFalse = "False"
