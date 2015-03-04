@@ -844,11 +844,13 @@ proc unpack*(st: Stream): Msg =
 proc t*(msg: Msg) =
   ## Test by cyclic translation. Don't use.
   let before = $expr(msg)
+  echo before
   let st = newStringStream()
   st.pack(msg)
   st.setPosition(0)
   let unpacked = st.unpack
   let after = $expr(unpacked)
+  echo after
   assert(before == after)
 
 when isMainModule:
@@ -888,3 +890,6 @@ when isMainModule:
   t(Ext8(12, @[cast[byte](1),2,3]))
   t(Ext16(12, @[cast[byte](1),2,3]))
   t(Ext32(12, @[cast[byte](1),2,3]))
+
+  t(FixArray(toIterable(@[FixArray(toIterable(@[True, False])), PFixNum(18)])))
+  # t(FixArray(toIterable(@[FixArray(toIterable(@[True, False])), FixArray(toIterable(@[True, False]))])))
