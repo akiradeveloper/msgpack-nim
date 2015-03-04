@@ -13,6 +13,7 @@ before_script:
 script:
   - set -e
   - set -x
+  - nim c example
   - make test
   - make quickcheck
 notifications:
