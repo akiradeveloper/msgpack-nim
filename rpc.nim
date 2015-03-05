@@ -86,20 +86,30 @@ proc call(cli: Client, fun: Msg, params: openArray[Msg]): Future[Msg] =
   # BUG
   let req = "aaa" # TODO
   asyncCheck cli.sock.send(req)
-  result = cli.sock.recv(100000) $> proc (data:string): Msg =
-    let arr: seq[Msg] = doHandle(data)
-    result = case toInt(arr[0]):
-    of 1:
-      let id = toInt(arr[1])
-      let success = arr[2].kind == mkNil
-      if success:
-        arr[3]
+  # result = cli.sock.recv(100000) $> proc (data:string): Msg =
+  #   let arr: seq[Msg] = doHandle(data)
+  #   result = case toInt(arr[0]):
+  #   of 1:
+  #     let id = toInt(arr[1])
+  #     let success = arr[2].kind == mkNil
+  #     if success:
+  #       arr[3]
+  #     else:
+  #       Nil
+  #   else:
+  #     Nil
+  # result.callback = proc (x: Future[Msg]) =
+  #   cli.sock.close
+  let retfut = newFuture[Msg]()
+  let fut = cli.sock.recv(10000)
+  fut.callback =
+    proc (fut: Future[string]) =
+      if fut.failed:
+        retfut.fail(fut.error)
       else:
-        Nil
-    else:
-      Nil
-  result.callback = proc (x: Future[Msg]) =
-    cli.sock.close
+        let data = fut.read
+        retfut.complete(Nil)
+  retfut
 
 proc notify(cli: Client, fun: Msg, params: openArray[Msg]): Future[void] {.async.} =
   discard
