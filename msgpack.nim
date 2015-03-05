@@ -231,7 +231,7 @@ proc Ext32*(t: uint8, data: seq[byte]): Msg =
 
 {.pop.}
 
-proc compInt(x: int): Msg =
+proc toMsg(x: int): Msg =
   ## Given x of int and returns a Msg object
   ## that is most compression-effective.
   if 0 <= x:
@@ -248,6 +248,15 @@ proc compInt(x: int): Msg =
   else:
     # TODO
     Int64(x.int64)
+
+proc toInt(x: Msg): int =
+  discard
+
+proc toMsg(x: string): Msg =
+  discard
+
+proc toStr(x: Msg): string =
+  discard
 
 # ------------------------------------------------------------------------------
 

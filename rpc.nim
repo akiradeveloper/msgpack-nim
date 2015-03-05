@@ -9,16 +9,16 @@ import asyncnet
 import rawsockets
 import streams
 
-proc `$>`[A, B](fut: Future[A], f: proc(x: A): B): Future[B] =
-  # experimental. use await?
-  let retfut = newFuture[B]("asyncdispatch.`lift`")
-  fut.callback =
-    proc (fut: Future[A]) =
-      if fut.failed:
-        retfut.fail(fut.error)
-      else:
-        retfut.complete(f(fut.read))
-  return retfut
+# proc `$>`[A, B](fut: Future[A], f: proc(x: A): B): Future[B] =
+#   # experimental. use await?
+#   let retfut = newFuture[B]("asyncdispatch.`lift`")
+#   fut.callback =
+#     proc (fut: Future[A]) =
+#       if fut.failed:
+#         retfut.fail(fut.error)
+#       else:
+#         retfut.complete(f(fut.read))
+#   return retfut
 
 type Server = object
   sock: AsyncSocket
@@ -43,7 +43,8 @@ proc toInt(m: Msg): int = discard
 proc doHandle(data: string): seq[Msg] =
   let st = newStringStream(data)
   let msg = st.unpack
-  let arr: seq[Msg] = case msg.kind:
+  let arr: seq[Msg] =
+    case msg.kind:
     of mkFixArray:
       msg.vFixArray
     of mkArray16:
@@ -87,7 +88,8 @@ proc call(cli: Client, fun: Msg, params: openArray[Msg]): Future[Msg] {.async.} 
   await cli.sock.send(req)
   let data = await cli.sock.recv(10000)
   let arr = doHandle(data)
-  result = case toInt(arr[0]):
+  result =
+    case toInt(arr[0]):
     of 1:
       let id = toInt(arr[1])
       let success = arr[2].kind == mkNil
