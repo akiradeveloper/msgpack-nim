@@ -9,19 +9,15 @@ import asyncnet
 import rawsockets
 import streams
 
-proc lift[A, B](f: proc(x: A): B, fut: Future[A]): Future[B] =
+proc `$>`[A, B](fut: Future[A], f: proc(x: A): B): Future[B] =
   let retfut = newFuture[B]("asyncdispatch.`lift`")
   fut.callback =
     proc (fut: Future[A]) =
       if fut.failed:
         retfut.fail(fut.error)
       else:
-        retfut.complete(fut.read)
+        retfut.complete(f(fut.read))
   return retfut
-
-type Address = object
-  address: string
-  port: Port
 
 type Server = object
   sock: AsyncSocket
@@ -35,24 +31,26 @@ proc addProc(server: Server, key: string, f: proc (x: seq[Msg]): Msg) =
 proc addNotify(server: Server, key: string, f: proc (x: seq[Msg]): void) =
   discard
 
-proc handle(server: Server, data: string) =
-  let st = newStringStream(data)
-  let msg = st.unpack
-  let arr: seq[Msg] = case msg.kind:
-    of mkFixArray:
-      msg.vFixArray
-    of mkArray16:
-      msg.vArray16
-    of mkArray32:
-      msg.vArray32
-    else:
-      @[]
+proc handle(server: Server, conn: AsyncSocket) {.async.} =
+  let data = conn.recv(1 shl 60)
+  result = data $> proc (x:string): auto =
+    let st = newStringStream(x)
+    let msg = st.unpack
+    let arr: seq[Msg] = case msg.kind:
+      of mkFixArray:
+        msg.vFixArray
+      of mkArray16:
+        msg.vArray16
+      of mkArray32:
+        msg.vArray32
+      else:
+        @[]
+    arr
   
 proc start(server: Server) {.async.} =
   while true:
     let conn: AsyncSocket = await server.sock.accept
-    let data = await conn.recv(1 shl 60)
-    server.handle(data)
+    asyncCheck server.handle(conn)
 
 type Client = object
   sock: AsyncSocket
