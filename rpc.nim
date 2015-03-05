@@ -9,16 +9,16 @@ import asyncnet
 import rawsockets
 import streams
 
-# proc `$>`[A, B](fut: Future[A], f: proc(x: A): B): Future[B] =
-#   # experimental. use await?
-#   let retfut = newFuture[B]("asyncdispatch.`lift`")
-#   fut.callback =
-#     proc (fut: Future[A]) =
-#       if fut.failed:
-#         retfut.fail(fut.error)
-#       else:
-#         retfut.complete(f(fut.read))
-#   return retfut
+proc `$>`[A, B](fut: Future[A], f: proc(x: A): B): Future[B] =
+  # experimental. use await?
+  let retfut = newFuture[B]("asyncdispatch.`lift`")
+  fut.callback =
+    proc (fut: Future[A]) =
+      if fut.failed:
+        retfut.fail(fut.error)
+      else:
+        retfut.complete(f(fut.read))
+  return retfut
 
 type Server = object
   sock: AsyncSocket
@@ -82,23 +82,24 @@ type Client = object
 proc mkClient(gen: ClientGen, sock: AsyncSocket): Client =
   Client(sock: sock)
 
-proc call(cli: Client, fun: Msg, params: openArray[Msg]): Future[Msg] {.async.} =
-  let retfut: Future[Msg] = newFuture[Msg]()
+proc call(cli: Client, fun: Msg, params: openArray[Msg]): Future[Msg] =
+  # BUG
   let req = "aaa" # TODO
-  await cli.sock.send(req)
-  let data = await cli.sock.recv(100000)
-  let arr: seq[Msg] = doHandle(data)
-  case toInt(arr[0]):
-  of 1:
-    let id = toInt(arr[1])
-    let success = arr[2].kind == mkNil
-    if success:
-      let r: Msg = arr[3]
-      retfut.complete(r)
+  asyncCheck cli.sock.send(req)
+  result = cli.sock.recv(100000) $> proc (data:string): Msg =
+    let arr: seq[Msg] = doHandle(data)
+    result = case toInt(arr[0]):
+    of 1:
+      let id = toInt(arr[1])
+      let success = arr[2].kind == mkNil
+      if success:
+        arr[3]
+      else:
+        Nil
     else:
-      retfut.fail(nil) # TODO
-  else:
-    assert(false)
+      Nil
+  result.callback = proc (x: Future[Msg]) =
+    cli.sock.close
 
 proc notify(cli: Client, fun: Msg, params: openArray[Msg]): Future[void] {.async.} =
   discard
