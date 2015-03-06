@@ -18,7 +18,7 @@ type
   b32 = int32
   b64 = int64
 
-type ExtObj* = tuple[a:uint8, b:seq[byte]]
+type ExtObj* = tuple[`type`:uint8, data:seq[byte]]
 
 type
   MsgKind* = enum
@@ -231,17 +231,21 @@ proc Ext32*(t: uint8, data: seq[byte]): Msg =
 
 {.pop.}
 
+# ------------------------------------------------------------------------------
+
+# Nim Object <=> Msg Object Conversion
+
 proc toMsg(x: int): Msg =
   ## Given x of int and returns a Msg object
   ## that is most compression-effective.
   if 0 <= x:
-    if x <= 0b01111111:
+    if x < 0b10000000:
       PFixNum(cast[uint8](x.toU8))
-    elif x <= 0xff:
+    elif x < 0x100:
       UInt8(cast[uint8](x.toU8))
-    elif x <= 0xffff:
+    elif x < 0x10000:
       UInt16(cast[uint16](x.toU16))
-    elif x <= 0xffffffff:
+    elif x < 0x100000000:
       UInt32(cast[uint32](x.toU32))
     else:
       UInt64(x.uint64)
@@ -249,14 +253,130 @@ proc toMsg(x: int): Msg =
     # TODO
     Int64(x.int64)
 
-proc toInt(x: Msg): int =
-  discard
-
 proc toMsg(x: string): Msg =
-  discard
+  let l = len(x)
+  if l < 32:
+    FixStr(x)
+  elif l < 0x100:
+    Str8(x)
+  elif l < 0x10000:
+    Str16(x)
+  elif l < 0x100000000:
+    Str32(x)
+  else:
+    assert(false)
+    nil
 
-proc toStr(x: Msg): string =
-  discard
+proc toMsg(x: seq[byte]): Msg =
+  let l = len(x)
+  if l < 0x100:
+    Bin8(x)
+  elif l < 0x10000:
+    Bin16(x)
+  elif l < 0x100000000:
+    Bin32(x)
+  else:
+    assert(false)
+    nil
+
+proc toMsg(x: seq[Msg]): Msg =
+  let l = len(x)
+  if l < 16:
+    FixArray(x)
+  elif l < 0x10000:
+    Array16(x)
+  elif l < 0x100000000:
+    Array32(x)
+  else:
+    assert(false)
+    nil
+
+proc toMsg(x: seq[tuple[key:Msg, val:Msg]]): Msg =
+  let l = len(x)
+  if l < 16:
+    FixMap(x)
+  elif l < 0x10000:
+    Map16(x)
+  elif l < 0x100000000:
+    Map32(x)
+  else:
+    assert(false)
+    nil
+
+proc toMsg(x: ExtObj): Msg =
+  nil
+
+proc unwrapInt(x: Msg): int =
+  nil
+
+proc unwrapStr(x: Msg): string =
+  case x.kind:
+  of mkFixStr:
+    x.vFixStr
+  of mkStr8:
+    x.vStr8
+  of mkStr16:
+    x.vStr16
+  of mkStr32:
+    x.vStr32
+  else:
+    assert(false)
+    nil
+
+proc unwrapBin(x: Msg): seq[byte] =
+  case x.kind:
+  of mkBin8:
+    x.vBin8
+  of mkBin16:
+    x.vBin16
+  of mkBin32:
+    x.vBin32
+  else:
+    assert(false)
+    nil
+
+proc unwrapArray(x: Msg): seq[Msg] =
+  case x.kind:
+  of mkFixArray:
+    x.vFixArray
+  of mkArray16:
+    x.vArray16
+  of mkArray32:
+    x.vArray32
+  else:
+    assert(false)
+    nil
+ 
+proc unwrapMap(x: Msg): seq[tuple[key:Msg, val:Msg]] =
+  case x.kind:
+  of mkFixMap:
+    x.vFixMap
+  of mkMap16:
+    x.vMap16
+  of mkMap32:
+    x.vMap32
+  else:
+    assert(false)
+    nil
+
+proc unwrapExt(x: Msg): ExtObj =
+  case x.kind:
+  of mkFixExt1:
+    x.vFixExt1
+  of mkFixExt2:
+    x.vFixExt2
+  of mkFixExt4:
+    x.vFixExt4
+  of mkFixExt8:
+    x.vFixExt8
+  of mkFixExt16:
+    x.vFixExt16
+  of mkExt8:
+    x.vExt8
+  of mkExt16:
+    x.vExt16
+  else:
+    x.vExt32 # FIXME
 
 # ------------------------------------------------------------------------------
 
