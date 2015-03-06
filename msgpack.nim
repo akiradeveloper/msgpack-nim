@@ -324,7 +324,27 @@ proc toMsg(x: ExtObj): Msg =
     Ext32(t, d)
 
 proc unwrapInt(x: Msg): int =
-  nil
+  case x.kind:
+  of mkPFixNum:
+    x.vPFixNum.int
+  of mkNFixNum:
+    x.vNFixNum.int
+  of mkUInt8:
+    x.vUInt8.int
+  of mkUInt16:
+    x.vUInt16.int
+  of mkUInt32:
+    x.vUInt32.int
+  of mkUInt64:
+    x.vUInt64.int # FIXME
+  of mkInt8:
+    x.vInt8.int
+  of mkInt16:
+    x.vInt16.int
+  of mkInt32:
+    x.vInt32.int
+  else:
+    x.vInt64.int
 
 proc unwrapStr(x: Msg): string =
   case x.kind:
