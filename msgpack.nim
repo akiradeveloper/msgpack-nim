@@ -304,7 +304,24 @@ proc toMsg(x: seq[tuple[key:Msg, val:Msg]]): Msg =
     nil
 
 proc toMsg(x: ExtObj): Msg =
-  nil
+  let (t, d) = x
+  let l = len(d)
+  if l == 1:
+    FixExt1(t, d)
+  elif l == 2:
+    FixExt2(t, d)
+  elif l == 4:
+    FixExt4(t, d)
+  elif l == 8:
+    FixExt8(t, d)
+  elif l == 16:
+    FixExt16(t, d)
+  elif l < 0x100:
+    Ext8(t, d)
+  elif l < 0x10000:
+    Ext16(t, d)
+  else: # FIXME
+    Ext32(t, d)
 
 proc unwrapInt(x: Msg): int =
   nil
