@@ -346,6 +346,13 @@ proc unwrapInt(x: Msg): int =
   else:
     x.vInt64.int
 
+proc unwrapFloat(x: Msg): float =
+  case x.kind:
+  of mkFloat32:
+    x.vFloat32.float
+  else:
+    x.vFloat64.float
+
 proc unwrapStr(x: Msg): string =
   case x.kind:
   of mkFixStr:
