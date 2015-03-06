@@ -235,7 +235,7 @@ proc Ext32*(t: uint8, data: seq[byte]): Msg =
 
 # Nim Object <=> Msg Object Conversion
 
-proc toMsg(x: int): Msg =
+proc toMsg*(x: int): Msg =
   ## Given x of int and returns a Msg object
   ## that is most compression-effective.
   if 0 <= x:
@@ -250,80 +250,84 @@ proc toMsg(x: int): Msg =
     else:
       UInt64(x.uint64)
   else:
-    # TODO
-    Int64(x.int64)
+    if x >= -32:
+      NFixNum(cast[int8](x.toU8))
+    elif x >= -128:
+      Int8(cast[int8](x.toU8))
+    else:
+      Int64(x.int64)
 
-proc toMsg(x: string): Msg =
-  let l = len(x)
-  if l < 32:
+proc toMsg*(x: string): Msg =
+  let sz = len(x)
+  if sz < 32:
     FixStr(x)
-  elif l < 0x100:
+  elif sz < 0x100:
     Str8(x)
-  elif l < 0x10000:
+  elif sz < 0x10000:
     Str16(x)
-  elif l < 0x100000000:
+  elif sz < 0x100000000:
     Str32(x)
   else:
     assert(false)
     nil
 
-proc toMsg(x: seq[byte]): Msg =
-  let l = len(x)
-  if l < 0x100:
+proc toMsg*(x: seq[byte]): Msg =
+  let sz = len(x)
+  if sz < 0x100:
     Bin8(x)
-  elif l < 0x10000:
+  elif sz < 0x10000:
     Bin16(x)
-  elif l < 0x100000000:
+  elif sz < 0x100000000:
     Bin32(x)
   else:
     assert(false)
     nil
 
-proc toMsg(x: seq[Msg]): Msg =
-  let l = len(x)
-  if l < 16:
+proc toMsg*(x: seq[Msg]): Msg =
+  let sz = len(x)
+  if sz < 16:
     FixArray(x)
-  elif l < 0x10000:
+  elif sz < 0x10000:
     Array16(x)
-  elif l < 0x100000000:
+  elif sz < 0x100000000:
     Array32(x)
   else:
     assert(false)
     nil
 
-proc toMsg(x: seq[tuple[key:Msg, val:Msg]]): Msg =
-  let l = len(x)
-  if l < 16:
+proc toMsg*(x: seq[tuple[key:Msg, val:Msg]]): Msg =
+  let sz = len(x)
+  if sz < 16:
     FixMap(x)
-  elif l < 0x10000:
+  elif sz < 0x10000:
     Map16(x)
-  elif l < 0x100000000:
+  elif sz < 0x100000000:
     Map32(x)
   else:
     assert(false)
     nil
 
-proc toMsg(x: ExtObj): Msg =
+proc toMsg*(x: ExtObj): Msg =
   let (t, d) = x
-  let l = len(d)
-  if l == 1:
+  let sz = len(d)
+  if sz == 1:
     FixExt1(t, d)
-  elif l == 2:
+  elif sz == 2:
     FixExt2(t, d)
-  elif l == 4:
+  elif sz == 4:
     FixExt4(t, d)
-  elif l == 8:
+  elif sz == 8:
     FixExt8(t, d)
-  elif l == 16:
+  elif sz == 16:
     FixExt16(t, d)
-  elif l < 0x100:
+  elif sz < 0x100:
     Ext8(t, d)
-  elif l < 0x10000:
+  elif sz < 0x10000:
     Ext16(t, d)
   else: # FIXME
     Ext32(t, d)
 
-proc unwrapInt(x: Msg): int =
+proc unwrapInt*(x: Msg): int =
   case x.kind:
   of mkPFixNum:
     x.vPFixNum.int
@@ -346,14 +350,14 @@ proc unwrapInt(x: Msg): int =
   else:
     x.vInt64.int
 
-proc unwrapFloat(x: Msg): float =
+proc unwrapFloat*(x: Msg): float =
   case x.kind:
   of mkFloat32:
     x.vFloat32.float
   else:
     x.vFloat64.float
 
-proc unwrapStr(x: Msg): string =
+proc unwrapStr*(x: Msg): string =
   case x.kind:
   of mkFixStr:
     x.vFixStr
@@ -367,7 +371,7 @@ proc unwrapStr(x: Msg): string =
     assert(false)
     nil
 
-proc unwrapBin(x: Msg): seq[byte] =
+proc unwrapBin*(x: Msg): seq[byte] =
   case x.kind:
   of mkBin8:
     x.vBin8
@@ -379,7 +383,7 @@ proc unwrapBin(x: Msg): seq[byte] =
     assert(false)
     nil
 
-proc unwrapArray(x: Msg): seq[Msg] =
+proc unwrapArray*(x: Msg): seq[Msg] =
   case x.kind:
   of mkFixArray:
     x.vFixArray
@@ -391,7 +395,7 @@ proc unwrapArray(x: Msg): seq[Msg] =
     assert(false)
     nil
  
-proc unwrapMap(x: Msg): seq[tuple[key:Msg, val:Msg]] =
+proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
   case x.kind:
   of mkFixMap:
     x.vFixMap
@@ -403,7 +407,7 @@ proc unwrapMap(x: Msg): seq[tuple[key:Msg, val:Msg]] =
     assert(false)
     nil
 
-proc unwrapExt(x: Msg): ExtObj =
+proc unwrapExt*(x: Msg): ExtObj =
   case x.kind:
   of mkFixExt1:
     x.vFixExt1
@@ -656,7 +660,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xd4)
     var (a, b) = msg.vFixExt1
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), 1)
   of mkFixExt2:
     echo "fixext2"
@@ -664,7 +668,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xd5)
     var (a, b) = msg.vFixExt2
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), 2)
   of mkFixExt4:
     echo "fixext4"
@@ -672,7 +676,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xd6)
     var (a, b) = msg.vFixExt4
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), 4)
   of mkFixExt8:
     echo "fixext8"
@@ -680,7 +684,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xd7)
     var (a, b) = msg.vFixExt8
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), 8)
   of mkFixExt16:
     echo "fixext16"
@@ -688,7 +692,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xd8)
     var (a, b) = msg.vFixExt16
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), 16)
   of mkExt8:
     echo "ext8"
@@ -698,7 +702,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xc7)
     buf.appendBe8(cast[byte](sz.toU8))
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), sz)
   of mkExt16:
     echo "ext16"
@@ -708,7 +712,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xc8)
     buf.appendBe16(cast[b16](sz.toU16))
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), sz)
   of mkExt32:
     echo "ext32"
@@ -718,7 +722,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xc9)
     buf.appendBe32(cast[b32](sz.toU32))
     buf.appendBe8(cast[byte](a))
-    var m = msg
+    # var m = msg
     buf.appendData(addr(b[0]), sz)
 
 # ------------------------------------------------------------------------------
