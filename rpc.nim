@@ -20,25 +20,30 @@ import streams
 #         retfut.complete(f(fut.read))
 #   return retfut
 
-type Server = object
+type TCPServer = object
   sock: AsyncSocket
 
-proc mkServer(sock: AsyncSocket): Server =
-  Server(sock: sock)
+type Address = object
+  address: string 
+  port: Port
 
-proc addProc(server: Server, key: Msg, f: proc (x: seq[Msg]): Msg) =
+type MethodTable
+
+proc addProc*(server: Server, key: Msg, f: proc (x: seq[Msg]): Msg) =
   discard
 
 proc runProc(server: Server, key: Msg, params: seq[Msg]): Msg =
   discard
 
-proc addNotify(server: Server, key: Msg, f: proc (x: seq[Msg]): void) =
+proc addNotify*(server: Server, key: Msg, f: proc (x: seq[Msg]): void) =
   discard
 
 proc runNotify(server: Server, key: Msg, params: seq[Msg]) =
   discard
 
-proc toInt(m: Msg): int = discard
+proc mkTCPServer(address: Address): Server =
+  # TODO
+  Server(sock: sock)
 
 proc doHandle(data: string): seq[Msg] =
   let st = newStringStream(data)
@@ -57,7 +62,7 @@ proc doHandle(data: string): seq[Msg] =
 proc handle(server: Server, conn: AsyncSocket) {.async.} =
   let data = await conn.recv(1 shl 60)
   let arr = doHandle(data)
-  case toInt(arr[0]):
+  case unwrapInt(arr[0]):
   of 0:
     let id = toInt(arr[1])
     let key = arr[2]
@@ -77,10 +82,10 @@ proc start(server: Server) {.async.} =
 
 type ClientGen = object
 
-type Client = object
+type TCPClient = object
   sock: AsyncSocket
 
-proc mkClient(gen: ClientGen, sock: AsyncSocket): Client =
+proc mkTCPClient(gen: ClientGen, sock: AsyncSocket): Client =
   Client(sock: sock)
 
 proc call(cli: Client, fun: Msg, params: openArray[Msg]): Future[Msg] {.async.} =
@@ -114,8 +119,13 @@ when isMainModule:
   assert(len(cl) == 1)
   let t = cl[0] # server or client
   if t == "server":
-    discard
+    let server = TCPServer("localhost", Port(20000))
+    server.addMethod(proc (x: openArray[Msg]): Msg =
+      let a = unwrapInt(x)
+      toMsg(a * 2))
+    server.run
   elif t == "client":
-    discard
+    let client = TCPClient("localhost", Port(20000))
+    cli
   else:
     assert(false)
