@@ -254,6 +254,10 @@ proc toMsg*(x: int): Msg =
       NFixNum(cast[int8](x.toU8))
     elif x >= -128:
       Int8(cast[int8](x.toU8))
+    elif x >= -(1 shl 15):
+      Int16(cast[int16](x.toU16))
+    elif x >= -(1 shl 31):
+      Int32(cast[int32](x.toU32))
     else:
       Int64(x.int64)
 
