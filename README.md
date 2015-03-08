@@ -59,8 +59,6 @@ for e in msg.unwrapMap:
 ## Todo
 
 * Implement Messagepack-RPC  
-* Implement Nim object to/from Msg object translation (but I am a bit skeptical about this idea of
-  mapping Nim object to Msg object)  
 * Evaluate performance and scalability  
 * Talk with offical Ruby implementation  
 * Don't repeat yourself: The code now has too much duplications. Using templates?  
