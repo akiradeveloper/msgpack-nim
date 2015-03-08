@@ -14,11 +14,11 @@ import unsigned
 #
 
 type
-  b16 = int16
-  b32 = int32
-  b64 = int64
+  b16 = uint16
+  b32 = uint32
+  b64 = uint64
 
-type ExtObj* = tuple[`type`:uint8, data:seq[byte]]
+type Ext* = tuple[typ:int, data:seq[byte]]
 
 type
   MsgKind* = enum
@@ -89,14 +89,14 @@ type
     of mkBin8: vBin8*: seq[byte]
     of mkBin16: vBin16*: seq[byte]
     of mkBin32: vBin32*: seq[byte]
-    of mkFixExt1: vFixExt1: ExtObj
-    of mkFixExt2: vFixExt2: ExtObj
-    of mkFixExt4: vFixExt4: ExtObj
-    of mkFixExt8: vFixExt8: ExtObj
-    of mkFixExt16: vFixExt16: ExtObj
-    of mkExt8: vExt8: ExtObj
-    of mkExt16: vExt16: ExtObj
-    of mkExt32: vExt32: ExtObj
+    of mkFixExt1: vFixExt1: Ext
+    of mkFixExt2: vFixExt2: Ext
+    of mkFixExt4: vFixExt4: Ext
+    of mkFixExt8: vFixExt8: Ext
+    of mkFixExt16: vFixExt16: Ext
+    of mkExt8: vExt8: Ext
+    of mkExt16: vExt16: Ext
+    of mkExt32: vExt32: Ext
 
 proc `$`(msg: Msg): string =
   $(msg[])
@@ -197,37 +197,37 @@ proc Bin32*(v: seq[byte]): Msg =
   assert(len(v) < (1 shl 32))
   Msg(kind: mkBin32, vBin32: v)
 
-proc FixExt1*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) == 1)
-  Msg(kind: mkFixExt1, vFixExt1: (t, data))
+proc FixExt1*(v: Ext): Msg =
+  assert(len(v.data) == 1)
+  Msg(kind: mkFixExt1, vFixExt1: v)
 
-proc FixExt2*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) == 2)
-  Msg(kind: mkFixExt2, vFixExt2: (t, data))
+proc FixExt2*(v: Ext): Msg =
+  assert(len(v.data) == 2)
+  Msg(kind: mkFixExt2, vFixExt2: v)
 
-proc FixExt4*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) == 4)
-  Msg(kind: mkFixExt4, vFixExt4: (t, data))
+proc FixExt4*(v: Ext): Msg =
+  assert(len(v.data) == 4)
+  Msg(kind: mkFixExt4, vFixExt4: v)
 
-proc FixExt8*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) == 8)
-  Msg(kind: mkFixExt8, vFixExt8: (t, data))
+proc FixExt8*(v: Ext): Msg =
+  assert(len(v.data) == 8)
+  Msg(kind: mkFixExt8, vFixExt8: v)
 
-proc FixExt16*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) == 16)
-  Msg(kind: mkFixExt16, vFixExt16: (t, data))
+proc FixExt16*(v: Ext): Msg =
+  assert(len(v.data) == 16)
+  Msg(kind: mkFixExt16, vFixExt16: v)
 
-proc Ext8*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) < (1 shl 8))
-  Msg(kind: mkExt8, vExt8: (t, data))
+proc Ext8*(v: Ext): Msg =
+  assert(len(v.data) < (1 shl 8))
+  Msg(kind: mkExt8, vExt8: v)
 
-proc Ext16*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) < (1 shl 16))
-  Msg(kind: mkExt16, vExt16: (t, data))
+proc Ext16*(v: Ext): Msg =
+  assert(len(v.data) < (1 shl 16))
+  Msg(kind: mkExt16, vExt16: v)
 
-proc Ext32*(t: uint8, data: seq[byte]): Msg =
-  assert(len(data) < (1 shl 32))
-  Msg(kind: mkExt32, vExt32: (t, data))
+proc Ext32*(v: Ext): Msg =
+  assert(len(v.data) < (1 shl 32))
+  Msg(kind: mkExt32, vExt32: v)
 
 {.pop.}
 
@@ -236,8 +236,10 @@ proc Ext32*(t: uint8, data: seq[byte]): Msg =
 # Nim Object <=> Msg Object Conversion
 
 proc toMsg*(x: int): Msg =
-  ## Given x of int and returns a Msg object
-  ## that is most compression-effective.
+  ## Given x of int and returns a Msg object that is most compression-effective.
+  ## The rule of thumb is use toMsg if you don't know in advance what Msg type it
+  ## will become, otherwise use specific conversion to Msg which can reduce
+  ## overhead to determine the Msg type.
   if 0 <= x:
     if x < 0b10000000:
       PFixNum(cast[uint8](x.toU8))
@@ -311,25 +313,24 @@ proc toMsg*(x: seq[tuple[key:Msg, val:Msg]]): Msg =
     assert(false)
     nil
 
-proc toMsg*(x: ExtObj): Msg =
-  let (t, d) = x
-  let sz = len(d)
+proc toMsg*(x: Ext): Msg =
+  let sz = len(x.data)
   if sz == 1:
-    FixExt1(t, d)
+    FixExt1(x)
   elif sz == 2:
-    FixExt2(t, d)
+    FixExt2(x)
   elif sz == 4:
-    FixExt4(t, d)
+    FixExt4(x)
   elif sz == 8:
-    FixExt8(t, d)
+    FixExt8(x)
   elif sz == 16:
-    FixExt16(t, d)
+    FixExt16(x)
   elif sz < 0x100:
-    Ext8(t, d)
+    Ext8(x)
   elif sz < 0x10000:
-    Ext16(t, d)
+    Ext16(x)
   else: # FIXME
-    Ext32(t, d)
+    Ext32(x)
 
 proc unwrapInt*(x: Msg): int =
   case x.kind:
@@ -411,7 +412,7 @@ proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
     assert(false)
     nil
 
-proc unwrapExt*(x: Msg): ExtObj =
+proc unwrapExt*(x: Msg): Ext =
   case x.kind:
   of mkFixExt1:
     x.vFixExt1
@@ -911,52 +912,52 @@ proc unpack(upc: Unpacker): Msg =
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](1)
     buf.popData(addr(d[0]), 1)
-    FixExt1(t, d)
+    FixExt1((t.int, d))
   of 0xd5:
     echo "fixext2"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](2)
     buf.popData(addr(d[0]), 2)
-    FixExt2(t, d)
+    FixExt2((t.int, d))
   of 0xd6:
     echo "fixext4"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](4)
     buf.popData(addr(d[0]), 4)
-    FixExt4(t, d)
+    FixExt4((t.int, d))
   of 0xd7:
     echo "fixext8"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](8)
     buf.popData(addr(d[0]), 8)
-    FixExt8(t, d)
+    FixExt8((t.int, d))
   of 0xd8:
     echo "fixext16"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](16)
     buf.popData(addr(d[0]), 16)
-    FixExt16(t, d)
+    FixExt16((t.int, d))
   of 0xc7:
     echo "ext8"
     let sz = cast[uint8](buf.popBe8)
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
-    Ext8(t, d)
+    Ext8((t.int, d))
   of 0xc8:
     echo "ext16"
     let sz = cast[uint16](buf.popBe16)
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
-    Ext16(t, d)
+    Ext16((t.int, d))
   of 0xc9:
     echo "ext32"
     let sz = cast[uint32](buf.popBe32)
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
-    Ext32(t, d)
+    Ext32((t.int, d))
   else:
     assert(false) # not reachable
     Nil
@@ -1026,14 +1027,14 @@ when isMainModule:
   t(Bin8(@[cast[byte](4),5,6]))
   t(Bin16(@[cast[byte](4),5,6]))
   t(Bin32(@[cast[byte](4),5,6]))
-  t(FixExt1(12, @[cast[byte](1)]))
-  t(FixExt2(12, @[cast[byte](1), 2]))
-  t(FixExt4(12, @[cast[byte](1), 2, 3, 4]))
-  t(FixExt8(12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8]))
-  t(FixExt16(12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]))
-  t(Ext8(12, @[cast[byte](1),2,3]))
-  t(Ext16(12, @[cast[byte](1),2,3]))
-  t(Ext32(12, @[cast[byte](1),2,3]))
+  t(FixExt1((12, @[cast[byte](1)])))
+  t(FixExt2((12, @[cast[byte](1), 2])))
+  t(FixExt4((12, @[cast[byte](1), 2, 3, 4])))
+  t(FixExt8((12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8])))
+  t(FixExt16((12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])))
+  t(Ext8((12, @[cast[byte](1),2,3])))
+  t(Ext16((12, @[cast[byte](1),2,3])))
+  t(Ext32((12, @[cast[byte](1),2,3])))
 
   t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
   # t(FixArray(toseq(@[FixArray(toseq(@[True, False])), FixArray(toseq(@[True, False]))])))

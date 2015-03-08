@@ -10,7 +10,10 @@ assert(st.getPosition == 0)
 # Type checking protects you from making trivial mistakes.
 # Now we pack {"ints":[5,-3]} but more complex combination of
 # any Msg types is allowed.
-let xs = @[5.toMsg, (-3).toMsg]
+#
+# In xs we can mix specific conversion (PFixNum) and generic
+# conversion (toMsg).
+let xs = @[PFixNum(5), (-3).toMsg]
 let ys = @[(key: "ints".toMsg, val: xs.toMsg)]
 st.pack(ys.toMsg) # Serialize!
 
@@ -25,4 +28,3 @@ for e in msg.unwrapMap:
   for e in e.val.unwrapArray:
     # emits 5 and then -3
     echo e.unwrapInt
-    
