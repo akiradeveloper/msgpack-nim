@@ -38,7 +38,7 @@ assert(st.getPosition == 0)
 # any Msg types is allowed.
 let xs = @[5.toMsg, (-3).toMsg]
 let ys = @[(key: "ints".toMsg, val: xs.toMsg)]
-st.pack(FixMap(ys)) # Serialize!
+st.pack(ys.toMsg) # Serialize!
 
 # We need to reset the cursor to the beginning of the target
 # byte sequence.
