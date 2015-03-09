@@ -58,7 +58,7 @@ proc handleRequest(server: Server, conn: AsyncSocket) {.async.} =
     let ret = server.runFunc(key, arr[3..arr.high])
     # How do we know that this RPC failed?
     # For now, we always return Nil (meaning success)
-    let arr = FixArray(@[PFixNum(0), arr[1], Nil, ret])
+    let arr = FixArray(@[PFixNum(1), arr[1], Nil, ret])
     var st = newStringStream()
     st.pack(arr)
     await conn.send(st.data)
@@ -73,22 +73,20 @@ proc loop(server: Server) {.async.} =
     let conn: AsyncSocket = await server.sock.accept
     asyncCheck server.handleRequest(conn)
 
-proc run(server: Server) =
+proc run(server: Server): auto =
   asyncCheck server.loop
   runForever
 
-type ClientGen = object
-
-type TCPClient = object
+type Client = object
   sock: AsyncSocket
 
-proc mkTCPClient(gen: ClientGen, sock: AsyncSocket): Client =
+proc Client(sock: AsyncSocket): Client =
   Client(sock: sock)
 
-proc call(cli: Client, fun: Msg, params: openArray[Msg]): Future[Msg] {.async.} =
+proc call(cli: Client, fun: string, params: openArray[Msg]): Future[Msg] {.async.} =
   let req = "aaa" # TODO
   await cli.sock.send(req)
-  let data = await cli.sock.recv(10000)
+  let data = await cli.sock.recv(1 shl 63)
   let arr = doHandle(data)
   result =
     case toInt(arr[0]):
@@ -101,11 +99,6 @@ proc call(cli: Client, fun: Msg, params: openArray[Msg]): Future[Msg] {.async.} 
         Nil
     else:
       Nil
-
-proc call2(cli, fun, params): Future[Msg] =
-  result = call(cli, fun, params)
-  result.callback = proc (x: Future[Msg]) =
-    cli.sock.close
 
 proc notify(cli: Client, fun: Msg, params: openArray[Msg]): Future[void] {.async.} =
   discard
