@@ -20,65 +20,62 @@ import streams
 #         retfut.complete(f(fut.read))
 #   return retfut
 
-type TCPServer = object
+import tables
+
+
+type Server = object
   sock: AsyncSocket
+  funcs: Table[string, proc (x: seq[Msg]): Msg]
+  notifies: Table[string, proc (x: seq[Msg])]
 
-type Address = object
-  address: string 
-  port: Port
-
-type MethodTable
-
-proc addProc*(server: Server, key: Msg, f: proc (x: seq[Msg]): Msg) =
+proc addFunc*(server: Server, key: string, f: proc (x: seq[Msg]): Msg) =
   discard
 
-proc runProc(server: Server, key: Msg, params: seq[Msg]): Msg =
+proc runFunc(server: Server, key: string, params: seq[Msg]): Msg =
   discard
 
-proc addNotify*(server: Server, key: Msg, f: proc (x: seq[Msg]): void) =
+proc addNotify*(server: Server, key: string, f: proc (x: seq[Msg])) =
   discard
 
-proc runNotify(server: Server, key: Msg, params: seq[Msg]) =
+proc runNotify(server: Server, key: string, params: seq[Msg]) =
   discard
 
-proc mkTCPServer(address: Address): Server =
-  # TODO
+proc mkServer(sock: AsyncSocket): Server =
   Server(sock: sock)
 
-proc doHandle(data: string): seq[Msg] =
+proc decompose(data: string): seq[Msg] =
   let st = newStringStream(data)
   let msg = st.unpack
-  let arr: seq[Msg] =
-    case msg.kind:
-    of mkFixArray:
-      msg.vFixArray
-    of mkArray16:
-      msg.vArray16
-    of mkArray32:
-      msg.vArray32
-    else:
-      @[]
+  msg.unwrapArray
 
-proc handle(server: Server, conn: AsyncSocket) {.async.} =
-  let data = await conn.recv(1 shl 60)
-  let arr = doHandle(data)
+proc handleRequest(server: Server, conn: AsyncSocket) {.async.} =
+  let data = await conn.recv(1 shl 63)
+  let arr = data.decompose
   case unwrapInt(arr[0]):
   of 0:
-    let id = toInt(arr[1])
-    let key = arr[2]
-    let r = server.runProc(key, arr[3..arr.high])
-    let res = "aaa"
-    await conn.send(res)
+    let id = unwrapInt(arr[1])
+    let key = unwrapStr(arr[2])
+    let ret = server.runFunc(key, arr[3..arr.high])
+    # How do we know that this RPC failed?
+    # For now, we always return Nil (meaning success)
+    let arr = FixArray(@[PFixNum(0), arr[1], Nil, ret])
+    var st = newStringStream()
+    st.pack(arr)
+    await conn.send(st.data)
   of 2:
-    let key = arr[1]
+    let key = unwrapStr(arr[1])
     server.runNotify(key, arr[2..arr.high])
   else:
     assert(false)
 
-proc start(server: Server) {.async.} =
+proc loop(server: Server) {.async.} =
   while true:
     let conn: AsyncSocket = await server.sock.accept
-    asyncCheck server.handle(conn)
+    asyncCheck server.handleRequest(conn)
+
+proc run(server: Server) =
+  asyncCheck server.loop
+  runForever
 
 type ClientGen = object
 
