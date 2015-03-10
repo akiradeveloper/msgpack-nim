@@ -10,6 +10,8 @@ import rawsockets
 import streams
 import tables
 
+let READALL = 1 shl 63
+
 type RPCMethod* = proc (args: seq[Msg]): Msg
 
 type Server* = object
@@ -25,20 +27,14 @@ proc mkServer*(sock: AsyncSocket): Server =
 proc addFunc*(server: var Server, key: string, f: RPCMethod) =
   server.methods.add(key, f)
 
-proc runFunc(server: Server, key: string, params: seq[Msg]): Msg =
-  discard
-
-proc runNotify(server: Server, key: string, params: seq[Msg]) =
-  discard
-
 proc decompose(data: string): seq[Msg] =
   let st = newStringStream(data)
   let msg = st.unpack
   msg.unwrapArray
 
 proc handleRequest(server: Server, conn: AsyncSocket) {.async.} =
-  let data = await conn.recv(1 shl 63)
-  let inMsg = data.decompose
+  let inData = await conn.recv(READALL)
+  let inMsg = decompose(inData)
   case unwrapInt(inMsg[0]):
   of 0:
     let id = unwrapInt(inMsg[1])
@@ -85,10 +81,12 @@ proc mkClient(sock: AsyncSocket): Client =
   Client(sock: sock)
 
 proc call(cli: Client, fun: string, params: openArray[Msg]): Future[Msg] {.async.} =
-  let req = "aaa" # TODO
-  await cli.sock.send(req)
-  let data = await cli.sock.recv(1 shl 63)
-  let arr = doHandle(data)
+  let reqMsg: Msg = FixArray(@[])
+  var st = newStringStream()
+  st.pack(reqMsg)
+  await cli.sock.send(st.data)
+  let ackData = await cli.sock.recv(READALL)
+  let ackMsg = decompose(ackData)
   result =
     case toInt(arr[0]):
     of 1:
