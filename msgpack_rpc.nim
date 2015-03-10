@@ -8,40 +8,28 @@ import asyncdispatch
 import asyncnet
 import rawsockets
 import streams
-
-# proc `$>`[A, B](fut: Future[A], f: proc(x: A): B): Future[B] =
-#   # experimental. use await?
-#   let retfut = newFuture[B]("asyncdispatch.`lift`")
-#   fut.callback =
-#     proc (fut: Future[A]) =
-#       if fut.failed:
-#         retfut.fail(fut.error)
-#       else:
-#         retfut.complete(f(fut.read))
-#   return retfut
-
 import tables
 
+type RPCMethod* = proc (args: seq[Msg]): Msg
 
-type Server = object
+type Server* = object
   sock: AsyncSocket
-  funcs: Table[string, proc (x: seq[Msg]): Msg]
-  notifies: Table[string, proc (x: seq[Msg])]
+  methods: TableRef[string, proc (x: seq[Msg]): Msg]
 
-proc addFunc*(server: Server, key: string, f: proc (x: seq[Msg]): Msg) =
-  discard
+proc mkServer*(sock: AsyncSocket): Server =
+  Server(
+    sock: sock,
+    methods: newTable[string, RPCMethod]()
+  )
+
+proc addFunc*(server: var Server, key: string, f: RPCMethod) =
+  server.methods.add(key, f)
 
 proc runFunc(server: Server, key: string, params: seq[Msg]): Msg =
   discard
 
-proc addNotify*(server: Server, key: string, f: proc (x: seq[Msg])) =
-  discard
-
 proc runNotify(server: Server, key: string, params: seq[Msg]) =
   discard
-
-proc mkServer(sock: AsyncSocket): Server =
-  Server(sock: sock)
 
 proc decompose(data: string): seq[Msg] =
   let st = newStringStream(data)
@@ -50,21 +38,34 @@ proc decompose(data: string): seq[Msg] =
 
 proc handleRequest(server: Server, conn: AsyncSocket) {.async.} =
   let data = await conn.recv(1 shl 63)
-  let arr = data.decompose
-  case unwrapInt(arr[0]):
+  let inMsg = data.decompose
+  case unwrapInt(inMsg[0]):
   of 0:
-    let id = unwrapInt(arr[1])
-    let key = unwrapStr(arr[2])
-    let ret = server.runFunc(key, arr[3..arr.high])
-    # How do we know that this RPC failed?
-    # For now, we always return Nil (meaning success)
-    let arr = FixArray(@[PFixNum(1), arr[1], Nil, ret])
+    let id = unwrapInt(inMsg[1])
+    let key = unwrapStr(inMsg[2])
+    var failed = false
+    # TODO should also check arity
+    if not server.methods.hasKey(key):
+      failed = true
+    var outMsg = Nil
+    if not failed:
+      let f = server.methods[key]
+      let ret = f(inMsg[3..inMsg.high])
+      outMsg = FixArray(@[PFixNum(1), inMsg[1], Nil, ret])
+    else:
+      outMsg = FixArray(@[PFixNum(1), inMsg[1], (-1).toMsg, Nil])
     var st = newStringStream()
-    st.pack(arr)
+    st.pack(outMsg)
     await conn.send(st.data)
   of 2:
-    let key = unwrapStr(arr[1])
-    server.runNotify(key, arr[2..arr.high])
+    let key = unwrapStr(inMsg[1])
+    var failed = false
+    if not server.methods.hasKey(key):
+      failed = true
+    if failed:
+      return
+    let f = server.methods[key]
+    discard f(inMsg[2..inMsg.high])
   else:
     assert(false)
 
@@ -80,7 +81,7 @@ proc run(server: Server): auto =
 type Client = object
   sock: AsyncSocket
 
-proc Client(sock: AsyncSocket): Client =
+proc mkClient(sock: AsyncSocket): Client =
   Client(sock: sock)
 
 proc call(cli: Client, fun: string, params: openArray[Msg]): Future[Msg] {.async.} =
