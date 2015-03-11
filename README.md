@@ -18,7 +18,7 @@ to see what happens (It will take a bit while. Be patient). Have a nice packing!
 
 ```sh
 $ nimble update
-$ nimble msgpack
+$ nimble install msgpack
 ```
 
 ## Example
