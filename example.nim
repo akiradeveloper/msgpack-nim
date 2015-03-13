@@ -12,9 +12,9 @@ assert(st.getPosition == 0)
 # any Msg types is allowed.
 #
 # In xs we can mix specific conversion (PFixNum) and generic
-# conversion (toMsg).
+# conversion (unwrap or toMsg).
 let xs = @[PFixNum(5), (-3).toMsg]
-let ys = @[(key: "ints".toMsg, val: xs.toMsg)]
+let ys = @[("a".toMsg, xs.toMsg), (wrap("b"), wrap(@[1, 2, 3]))]
 st.pack(ys.toMsg) # Serialize!
 
 # We need to reset the cursor to the beginning of the target
@@ -23,8 +23,15 @@ st.setPosition(0)
 
 let msg = st.unpack # Deserialize!
 
+# output:
+# a
+# 5
+# -3
+# b
+# 1
+# 2
+# 3
 for e in msg.unwrapMap:
-  echo e.key.unwrapStr # emits "ints"
+  echo e.key.unwrapStr
   for e in e.val.unwrapArray:
-    # emits 5 and then -3
     echo e.unwrapInt

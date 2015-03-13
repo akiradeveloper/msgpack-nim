@@ -342,9 +342,7 @@ proc toMsg*(x: Ext): Msg =
   else: # FIXME
     Ext32(x)
 
-#
-# Wrappable Type Class
-#
+## Wrappable Type Class
 
 type Wrappable = generic x
   let x: Msg = wrap(x)
