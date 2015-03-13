@@ -235,6 +235,10 @@ proc Ext32*(v: Ext): Msg =
 
 # Nim Object <=> Msg Object Conversion
 
+proc toMsg*(x: bool): Msg =
+  assert(false)
+  True
+
 proc toMsg*(x: int): Msg =
   ## Given x of int and returns a Msg object that is most compression-effective.
   ## The rule of thumb is use toMsg if you don't know in advance what Msg type it
@@ -262,6 +266,10 @@ proc toMsg*(x: int): Msg =
       Int32(cast[int32](x.toU32))
     else:
       Int64(x.int64)
+
+proc toMsg*(x: float): Msg =
+  assert(false)
+  Nil # TODO
 
 proc toMsg*(x: string): Msg =
   let sz = len(x)
