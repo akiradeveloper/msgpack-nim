@@ -74,12 +74,12 @@ body {
 /* For devices larger than 400px */
 @media (min-width: 400px) {
   .container {
-    width: 85%;
+    width: 100%;
     padding: 0; } }
 /* For devices larger than 650px */
 @media (min-width: 650px) {
   .container {
-    width: 80%; }
+    width: 100%; }
 
   .column,
   .columns {
@@ -392,7 +392,7 @@ h6 {
 ul,
 ol {
   padding: 0;
-  margin: 0 0 10px 25px; }
+  margin: 0 0 0px 15px; }
 
 ul ul,
 ul ol,
@@ -485,15 +485,16 @@ code {
   border: 1px solid #777777; }
 
 pre {
-  display: block;
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: calc(100% - 19.5px);
   padding: 9.5px;
-  margin: 0 10px 10px 10px;
+  margin: 0 10px 0px 10px;
   font-size: 14px;
   line-height: 20px;
   white-space: pre !important;
   overflow-y: hidden;
-  overflow: visible;
-  overflow-x: auto;
+  overflow-x: visible;
   background-color: whitesmoke;
   border: 1px solid #cccccc;
   -webkit-border-radius: 4px;
@@ -507,7 +508,7 @@ pre code {
   padding: 0;
   color: inherit;
   white-space: pre;
-  overflow-x: scroll;
+  overflow-x: visible;
   background-color: transparent;
   border: 0; }
 
@@ -1291,8 +1292,12 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     title="Ext16*(v: Ext): Msg"><wbr />Ext16</a></li>
   <li><a class="reference" href="#Ext32,Ext"
     title="Ext32*(v: Ext): Msg"><wbr />Ext32</a></li>
+  <li><a class="reference" href="#toMsg,bool"
+    title="toMsg*(x: bool): Msg"><wbr />to<wbr />Msg</a></li>
   <li><a class="reference" href="#toMsg,int"
     title="toMsg*(x: int): Msg"><wbr />to<wbr />Msg</a></li>
+  <li><a class="reference" href="#toMsg,float"
+    title="toMsg*(x: float): Msg"><wbr />to<wbr />Msg</a></li>
   <li><a class="reference" href="#toMsg,string"
     title="toMsg*(x: string): Msg"><wbr />to<wbr />Msg</a></li>
   <li><a class="reference" href="#toMsg,seq[byte]"
@@ -1303,6 +1308,22 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     title="toMsg*(x: seq[tuple[key: Msg, val: Msg]]): Msg"><wbr />to<wbr />Msg</a></li>
   <li><a class="reference" href="#toMsg,Ext"
     title="toMsg*(x: Ext): Msg"><wbr />to<wbr />Msg</a></li>
+  <li><a class="reference" href="#wrap,bool"
+    title="wrap*(x: bool): Msg"><wbr />wrap</a></li>
+  <li><a class="reference" href="#wrap,int"
+    title="wrap*(x: int): Msg"><wbr />wrap</a></li>
+  <li><a class="reference" href="#wrap,float"
+    title="wrap*(x: float): Msg"><wbr />wrap</a></li>
+  <li><a class="reference" href="#wrap,string"
+    title="wrap*(x: string): Msg"><wbr />wrap</a></li>
+  <li><a class="reference" href="#wrap,seq[byte]"
+    title="wrap*(x: seq[byte]): Msg"><wbr />wrap</a></li>
+  <li><a class="reference" href="#wrap,Ext"
+    title="wrap*(x: Ext): Msg"><wbr />wrap</a></li>
+  <li><a class="reference" href="#wrap,seq[T]"
+    title="wrap*[T: Wrappable](x: seq[T]): Msg"><wbr />wrap</a></li>
+  <li><a class="reference" href="#wrap,seq[tuple[K,V]]"
+    title="wrap*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg"><wbr />wrap</a></li>
   <li><a class="reference" href="#unwrapInt,Msg"
     title="unwrapInt*(x: Msg): int"><wbr />unwrap<wbr />Int</a></li>
   <li><a class="reference" href="#unwrapFloat,Msg"
@@ -1593,9 +1614,19 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
 
 
 </dd>
+<dt id="toMsg"><a name="toMsg,bool"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toMsg</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">bool</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
 <dt id="toMsg"><a name="toMsg,int"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toMsg</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
 <dd>
 Given x of int and returns a Msg object that is most compression-effective. The rule of thumb is use toMsg if you don't know in advance what Msg type it will become, otherwise use specific conversion to Msg which can reduce overhead to determine the Msg type.
+
+</dd>
+<dt id="toMsg"><a name="toMsg,float"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toMsg</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">float</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
 
 </dd>
 <dt id="toMsg"><a name="toMsg,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toMsg</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
@@ -1619,6 +1650,46 @@ Given x of int and returns a Msg object that is most compression-effective. The 
 
 </dd>
 <dt id="toMsg"><a name="toMsg,Ext"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toMsg</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">Ext</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,bool"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">bool</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,int"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,float"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">float</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,seq[byte]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">byte</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,Ext"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">Ext</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,seq[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">:</span> <span class="Identifier">Wrappable</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="wrap"><a name="wrap,seq[tuple[K,V]]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">wrap</span><span class="Operator">*</span><span class="Other">[</span><span class="Identifier">K</span><span class="Other">:</span> <span class="Identifier">Wrappable</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">:</span> <span class="Identifier">Wrappable</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">key</span><span class="Other">:</span> <span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Identifier">V</span><span class="Other">]</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Msg</span></pre></dt>
 <dd>
 
 
@@ -1683,10 +1754,11 @@ Test by cyclic translation. Don't use.
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-03-08 20:52:16 UTC</small>
+        <small>Made with Nim. Generated: 2015-03-13 21:43:09 UTC</small>
       </div>
     </div>
   </div>
 </div>
+
 </body>
 </html>
