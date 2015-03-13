@@ -492,119 +492,119 @@ proc pack(pc: Packer, msg: Msg) =
   let buf = pc.buf
   case msg.kind:
   of mkFixArray:
-    echo "fixarray"
+    #echo "fixarray"
     let h: int = 0x90 or len(msg.vFixArray)
     buf.ensureMore(1)
     buf.appendHeader(h)
     pc.appendArray(msg.vFixArray)
   of mkArray16:
-    echo "array16"
+    #echo "array16"
     let sz = len(msg.vArray16)
     buf.ensureMore(3)
     buf.appendHeader(0xdc)
     buf.appendBe16(cast[b16](sz.toU16))
     pc.appendArray(msg.vArray16)
   of mkArray32:
-    echo "array32"
+    #echo "array32"
     let sz = len(msg.vArray32)
     buf.ensureMore(5)
     buf.appendHeader(0xdd)
     buf.appendBe32(cast[b32](sz.toU32))
     pc.appendArray(msg.vArray32)
   of mkFixMap:
-    echo "fixmap"
+    #echo "fixmap"
     let sz = len(msg.vFixMap)
     let h = 0x80 or sz
     buf.ensureMore(1)
     buf.appendHeader(h)
     pc.appendMap(msg.vFixMap)
   of mkMap16:
-    echo "map16"
+    #echo "map16"
     let sz = len(msg.vMap16)
     buf.ensureMore(3)
     buf.appendHeader(0xde)
     buf.appendBe16(cast[b16](sz.toU16))
     pc.appendMap(msg.vMap16)
   of mkMap32:
-    echo "map32"
+    #echo "map32"
     let sz = len(msg.vMap32)
     buf.ensureMore(5)
     buf.appendHeader(0xdf)
     buf.appendBe32(cast[b32](sz.toU32))
     pc.appendMap(msg.vMap32)
   of mkNil:
-    echo "nil"
+    #echo "nil"
     buf.ensureMore(1)
     buf.appendHeader(0xc0)
   of mkFalse:
-    echo "false"
+    #echo "false"
     buf.ensureMore(1)
     buf.appendHeader(0xc2)
   of mkTrue:
-    echo "true"
+    #echo "true"
     buf.ensureMore(1)
     buf.appendHeader(0xc3)
   of mkPFixNum:
-    echo "pfixnum"
+    #echo "pfixnum"
     let h: int = 0x7f and msg.vPFixNum.int
     buf.ensureMore(1)
     buf.appendHeader(h)
   of mkNFixNum:
-    echo "nfixnum"
+    #echo "nfixnum"
     buf.ensureMore(1)
     buf.appendHeader(msg.vNFixNum.int)
   of mkUInt8:
-    echo "uint8"
+    #echo "uint8"
     buf.ensureMore(1+1)
     buf.appendHeader(0xcc)
     buf.appendBe8(cast[byte](msg.vUInt8))
   of mkUInt16:
-    echo "uint16"
+    #echo "uint16"
     buf.ensureMore(1+2)
     buf.appendHeader(0xcd)
     buf.appendBe16(cast[b16](msg.vUInt16))
   of mkUInt32:
-    echo "uint32"
+    #echo "uint32"
     buf.ensureMore(1+4)
     buf.appendHeader(0xce)
     buf.appendBe32(cast[b32](msg.vUInt32))
   of mkUInt64:
-    echo "uint64"
+    #echo "uint64"
     buf.ensureMore(1+8)
     buf.appendHeader(0xcf)
     buf.appendBe64(cast[b64](msg.vUInt64))
   of mkInt8:
-    echo "int8"
+    #echo "int8"
     buf.ensureMore(1+1)
     buf.appendHeader(0xd0)
     buf.appendBe8(cast[byte](msg.vInt8))
   of mkInt16:
-    echo "int16"
+    #echo "int16"
     buf.ensureMore(1+2)
     buf.appendHeader(0xd1)
     buf.appendBe16(cast[b16](msg.vInt16))
   of mkInt32:
-    echo "int32"
+    #echo "int32"
     buf.ensureMore(1+4)
     buf.appendHeader(0xd2)
     buf.appendBe32(cast[b32](msg.vInt32))
   of mkInt64:
-    echo "int64"
+    #echo "int64"
     buf.ensureMore(1+8)
     buf.appendHeader(0xd3)
     buf.appendBe64(cast[b64](msg.vInt64))
   of mkFloat32:
-    echo "float32"
+    #echo "float32"
     buf.ensureMore(1+4)
     buf.appendHeader(0xca)
     buf.appendBe32(cast[b32](msg.vFloat32))
   of mkFloat64:
-    echo "float64"
+    #echo "float64"
     buf.ensureMore(1+8)
     buf.appendHeader(0xcb)
     buf.appendBe64(cast[b64](msg.vFloat64))
   of mkFixStr:
-    echo "fixstr"
+    #echo "fixstr"
     let sz: int = len(msg.vFixStr)
     let h = 0xa0 or sz
     buf.ensureMore(1+sz)
@@ -612,7 +612,7 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vFixStr[0]), sz)
   of mkStr8:
-    echo "str8"
+    #echo "str8"
     let sz = len(msg.vStr8)
     buf.ensureMore(1 + sz)
     buf.appendHeader(0xd9)
@@ -620,7 +620,7 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vStr8[0]), sz)
   of mkStr16:
-    echo "str16"
+    #echo "str16"
     let sz = len(msg.vStr16)
     buf.ensureMore(3 + sz)
     buf.appendHeader(0xda)
@@ -628,7 +628,7 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vStr16[0]), sz)
   of mkStr32:
-    echo "str32"
+    #echo "str32"
     let sz = len(msg.vStr32)
     buf.ensureMore(5 + sz)
     buf.appendHeader(0xdb)
@@ -636,7 +636,7 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vStr32[0]), sz)
   of mkBin8:
-    echo "bin8"
+    #echo "bin8"
     let sz = len(msg.vBin8)
     buf.ensureMore(1+1+sz)
     buf.appendHeader(0xc4)
@@ -644,7 +644,7 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vBin8[0]), sz)
   of mkBin16:
-    echo "bin16"
+    #echo "bin16"
     let sz = len(msg.vBin16)
     buf.ensureMore(1+2+sz)
     buf.appendHeader(0xc5)
@@ -652,7 +652,7 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vBin16[0]), sz)
   of mkBin32:
-    echo "bin32"
+    #echo "bin32"
     let sz = len(msg.vBin32)
     buf.ensureMore(1+4+sz)
     buf.appendHeader(0xc6)
@@ -660,7 +660,7 @@ proc pack(pc: Packer, msg: Msg) =
     var m = msg
     buf.appendData(addr(m.vBin32[0]), sz)
   of mkFixExt1:
-    echo "fixext1"
+    #echo "fixext1"
     buf.ensureMore(3)
     buf.appendHeader(0xd4)
     var (a, b) = msg.vFixExt1
@@ -668,7 +668,7 @@ proc pack(pc: Packer, msg: Msg) =
     # var m = msg
     buf.appendData(addr(b[0]), 1)
   of mkFixExt2:
-    echo "fixext2"
+    #echo "fixext2"
     buf.ensureMore(4)
     buf.appendHeader(0xd5)
     var (a, b) = msg.vFixExt2
@@ -676,7 +676,7 @@ proc pack(pc: Packer, msg: Msg) =
     # var m = msg
     buf.appendData(addr(b[0]), 2)
   of mkFixExt4:
-    echo "fixext4"
+    #echo "fixext4"
     buf.ensureMore(6)
     buf.appendHeader(0xd6)
     var (a, b) = msg.vFixExt4
@@ -684,7 +684,7 @@ proc pack(pc: Packer, msg: Msg) =
     # var m = msg
     buf.appendData(addr(b[0]), 4)
   of mkFixExt8:
-    echo "fixext8"
+    #echo "fixext8"
     buf.ensureMore(10)
     buf.appendHeader(0xd7)
     var (a, b) = msg.vFixExt8
@@ -692,7 +692,7 @@ proc pack(pc: Packer, msg: Msg) =
     # var m = msg
     buf.appendData(addr(b[0]), 8)
   of mkFixExt16:
-    echo "fixext16"
+    #echo "fixext16"
     buf.ensureMore(18)
     buf.appendHeader(0xd8)
     var (a, b) = msg.vFixExt16
@@ -700,7 +700,7 @@ proc pack(pc: Packer, msg: Msg) =
     # var m = msg
     buf.appendData(addr(b[0]), 16)
   of mkExt8:
-    echo "ext8"
+    #echo "ext8"
     var (a, b) = msg.vExt8
     let sz = len(b)
     buf.ensureMore(1+1+1+sz)
@@ -710,7 +710,7 @@ proc pack(pc: Packer, msg: Msg) =
     # var m = msg
     buf.appendData(addr(b[0]), sz)
   of mkExt16:
-    echo "ext16"
+    #echo "ext16"
     var (a, b) = msg.vExt16
     let sz = len(b)
     buf.ensureMore(1+2+1+sz)
@@ -720,7 +720,7 @@ proc pack(pc: Packer, msg: Msg) =
     # var m = msg
     buf.appendData(addr(b[0]), sz)
   of mkExt32:
-    echo "ext32"
+    #echo "ext32"
     var (a, b) = msg.vExt32
     let sz = len(b)
     buf.ensureMore(1+4+1+sz)
@@ -792,167 +792,167 @@ proc unpack(upc: Unpacker): Msg =
   let buf = upc.buf
 
   let h = cast[uint8](buf.popBe8)
-  echo h.int
+  #echo h.int
 
   case h
   of 0x90..0x9f:
-    echo "fixarray"
+    #echo "fixarray"
     let sz: int = h and 0x0f
     FixArray(upc.popArray(sz.int))
   of 0xdc:
-    echo "array16"
+    #echo "array16"
     let sz = cast[uint16](buf.popBe16)
     Array16(upc.popArray(sz.int))
   of 0xdd:
-    echo "array32"
+    #echo "array32"
     let sz = cast[uint32](buf.popBe32)
     Array32(upc.popArray(sz.int))
   of 0x80..0x8f:
-    echo "fixmap"
+    #echo "fixmap"
     let sz: int = h and 0x0f
     FixMap(upc.popMap(sz))
   of 0xde:
-    echo "map16"
+    #echo "map16"
     let sz: int = cast[int](buf.popBe16)
     Map16(upc.popMap(sz))
   of 0xdf:
-    echo "map32"
+    #echo "map32"
     let sz: int = cast[int](buf.popBe32)
     Map32(upc.popMap(sz))
   of 0xc0:
-    echo "nil"
+    #echo "nil"
     Nil
   of 0xc3:
-    echo "true"
+    #echo "true"
     True
   of 0xc2:
-    echo "false"
+    #echo "false"
     False
   of 0x00..0x7f:
-    echo "pfixnum"
+    #echo "pfixnum"
     let v: int = h and 0x7f
     PFixNum(cast[uint8](v.toU8))
   of 0xe0..0xff:
-    echo "nfixnum"
+    #echo "nfixnum"
     NFixNum(cast[int8](h))
   of 0xcc:
-    echo "uint8"
+    #echo "uint8"
     UInt8(cast[uint8](buf.popBe8))
   of 0xcd:
-    echo "uint16"
+    #echo "uint16"
     UInt16(cast[uint16](buf.popBe16))
   of 0xce:
-    echo "uint32"
+    #echo "uint32"
     UInt32(cast[uint32](buf.popBe32))
   of 0xcf:
-    echo "uint64"
+    #echo "uint64"
     UInt64(cast[uint64](buf.popBe64))
   of 0xd0:
-    echo "int8"
+    #echo "int8"
     Int8(cast[int8](buf.popBe8))
   of 0xd1:
-    echo "int16"
+    #echo "int16"
     Int16(cast[int16](buf.popBe16))
   of 0xd2:
-    echo "int32"
+    #echo "int32"
     Int32(cast[int32](buf.popBe32))
   of 0xd3:
-    echo "int64"
+    #echo "int64"
     Int64(cast[int64](buf.popBe64))
   of 0xca:
-    echo "float32"
+    #echo "float32"
     Float32(cast[float32](buf.popBe32))
   of 0xcb:
-    echo "float64"
+    #echo "float64"
     Float64(cast[float64](buf.popBe64))
   of 0xa0..0xbf:
-    echo "fixstr"
+    #echo "fixstr"
     let sz: int = h.int and 0x1f
     var s = newString(sz)
     buf.popData(addr(s[0]), sz)
     FixStr(s)
   of 0xd9:
-    echo "str8"
+    #echo "str8"
     let sz = cast[uint8](buf.popBe8)
     var s = newString(sz.int)
     buf.popData(addr(s[0]), sz.int)
     Str8(s)
   of 0xda:
-    echo "str16"
+    #echo "str16"
     let sz = cast[uint16](buf.popBe16)
     var s = newString(sz.int)
     buf.popData(addr(s[0]), sz.int)
     Str16(s)
   of 0xdb:
-    echo "str32"
+    #echo "str32"
     let sz = cast[uint32](buf.popBe32)
     var s = newString(sz.int)
     buf.popData(addr(s[0]), sz.int)
     Str32(s)
   of 0xc4:
-    echo "bin8"
+    #echo "bin8"
     let sz = cast[uint8](buf.popBe8)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin8(d)
   of 0xc5:
-    echo "bin16"
+    #echo "bin16"
     let sz = cast[uint16](buf.popBe16)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin16(d)
   of 0xc6:
-    echo "bin32"
+    #echo "bin32"
     let sz = cast[uint32](buf.popBe32)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Bin32(d)
   of 0xd4:
-    echo "fixext1"
+    #echo "fixext1"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](1)
     buf.popData(addr(d[0]), 1)
     FixExt1((t.int, d))
   of 0xd5:
-    echo "fixext2"
+    #echo "fixext2"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](2)
     buf.popData(addr(d[0]), 2)
     FixExt2((t.int, d))
   of 0xd6:
-    echo "fixext4"
+    #echo "fixext4"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](4)
     buf.popData(addr(d[0]), 4)
     FixExt4((t.int, d))
   of 0xd7:
-    echo "fixext8"
+    #echo "fixext8"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](8)
     buf.popData(addr(d[0]), 8)
     FixExt8((t.int, d))
   of 0xd8:
-    echo "fixext16"
+    #echo "fixext16"
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](16)
     buf.popData(addr(d[0]), 16)
     FixExt16((t.int, d))
   of 0xc7:
-    echo "ext8"
+    #echo "ext8"
     let sz = cast[uint8](buf.popBe8)
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Ext8((t.int, d))
   of 0xc8:
-    echo "ext16"
+    #echo "ext16"
     let sz = cast[uint16](buf.popBe16)
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](sz.int)
     buf.popData(addr(d[0]), sz.int)
     Ext16((t.int, d))
   of 0xc9:
-    echo "ext32"
+    #echo "ext32"
     let sz = cast[uint32](buf.popBe32)
     let t = cast[uint8](buf.popBe8)
     var d = newSeq[byte](sz.int)
@@ -987,7 +987,7 @@ proc unpack*(st: Stream): Msg =
 proc t*(msg: Msg) =
   ## Test by cyclic translation. Don't use.
   let before = $expr(msg)
-  echo before
+  #echo before
   let st = newStringStream()
   assert(st.getPosition == 0)
   st.pack(msg)
@@ -995,7 +995,7 @@ proc t*(msg: Msg) =
   st.setPosition(0)
   let unpacked = st.unpack
   let after = $expr(unpacked)
-  echo after
+  #echo after
   assert(before == after)
 
 when isMainModule:

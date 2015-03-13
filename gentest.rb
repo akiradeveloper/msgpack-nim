@@ -5,9 +5,12 @@ tests = File.read(filename).split "\n"
 
 contents = """
 import msgpack
+import times
 
 when isMainModule:
+  var t0 = cpuTime()
 #{tests.map {|x| "  t(#{x})"}.join("\n")}
+  echo \"exectime [sec]: \", cpuTime() - t0
 """
 
 f = File.open("#{filename}.nim", "w")
