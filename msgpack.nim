@@ -342,7 +342,9 @@ proc toMsg*(x: Ext): Msg =
   else: # FIXME
     Ext32(x)
 
-## Wrappable Type Class
+#
+# Wrappable Type Class
+#
 
 type Wrappable = generic x
   let x: Msg = wrap(x)
@@ -376,6 +378,16 @@ proc wrap*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
 #
 # Msg Object => Nim Object
 #
+
+proc unwrapBool*(x: Msg): bool =
+  case x.kind:
+  of mkTrue:
+    true
+  of mkFalse:
+    false
+  else:
+    assert(false)
+    false
 
 proc unwrapInt*(x: Msg): int =
   case x.kind:
