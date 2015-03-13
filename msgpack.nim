@@ -735,10 +735,10 @@ proc pack(pc: Packer, msg: Msg) =
 type UnpackBuf = ref object
   st: Stream
 
-proc popBe8(buf): byte =
+proc popBe8(buf: UnpackBuf): byte =
   cast[byte](buf.st.readInt8)
 
-proc popBe16(buf): b16 =
+proc popBe16(buf: UnpackBuf): b16 =
   var v: b16
   var tmp = cast[b16](buf.st.readInt16)
   when cpuEndian == littleEndian:
@@ -747,7 +747,7 @@ proc popBe16(buf): b16 =
   else:
     tmp
 
-proc popBe32(buf): b32 =
+proc popBe32(buf: UnpackBuf): b32 =
   var v: b32
   var tmp = cast[b32](buf.st.readInt32)
   when cpuEndian == littleEndian:
@@ -756,7 +756,7 @@ proc popBe32(buf): b32 =
   else:
     tmp
 
-proc popBe64(buf): b64 =
+proc popBe64(buf: UnpackBuf): b64 =
   var v: b64
   var tmp = cast[b64](buf.st.readInt64)
   when cpuEndian == littleEndian:
