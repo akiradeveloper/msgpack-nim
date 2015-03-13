@@ -26,10 +26,19 @@ proc wrap(x: Ext): Msg =
 proc wrap[T:Wrappable](x: seq[T]): Msg =
   x.map(wrap).toMsg
 
+proc wrap[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
+  x.map(proc (e: tuple[key: K, val: V]): auto = (wrap(e.key), wrap(e.val))).toMsg
+
 # doesn't compile
 # converter toMsg[T:Wrappable](x: T): Msg =
 #   wrap(x)
 
 when isMainModule:
-  let x: Msg = wrap(@[1,2])
+  let x:Msg = wrap(@[1,2])
   echo x
+
+  let y:Msg = wrap(@[(1,2), (3,4)])
+  echo y
+
+  let z: Msg = wrap(@[@[1], @[2]])
+  echo z
