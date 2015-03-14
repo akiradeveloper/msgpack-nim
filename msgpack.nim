@@ -1131,7 +1131,8 @@ when isMainModule:
   let b: Msg = @[@[1], @[2]]
   echo b
 
-  let c: Msg = wrap(@[(1,1), (2,2)])
+  let cc: seq[tuple[key: int, val:int]] = @[(1,1), (2,2)]
+  let c: Msg = wrap(cc)
   echo c
 
   let f: Msg = wrap(@["a", "b"])
@@ -1140,7 +1141,8 @@ when isMainModule:
   let g: Msg = wrap(@[("a", "c"), ("b", "d")])
   echo g
 
-  # let e: Msg = wrap(@[(1,"a"), (2,"b")])
+  # let ee: seq[tuple[key: int, val: string]] = @[(1, "a"), (2, "b")]
+  # let e: Msg = wrap(ee)
   # echo e
 
   # let d: Msg = wrap(@[(1,@[1,2]), (3,@[1,2])])

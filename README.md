@@ -34,8 +34,8 @@ let st: Stream = newStringStream()
 assert(st.getPosition == 0)
 
 # Type checking protects you from making trivial mistakes.
-# Now we pack {"ints":[5,-3]} but more complex combination of
-# any Msg types is allowed.
+# Now we pack {"a":[5,-3], "b":[1,2,3]} but more complex
+# combination of any Msg types is allowed.
 #
 # In xs we can mix specific conversion (PFixNum) and generic
 # conversion (unwrap).
@@ -65,7 +65,7 @@ for e in msg.unwrapMap:
 
 ## Todo
 
-* Implement Messagepack-RPC  
+* Implement unwrapInto to convert Msg object to Nim object handily  
 * Evaluate performance and scalability  
 * Talk with offical Ruby implementation  
 * Don't repeat yourself: The code now has too much duplications. Using templates?  
