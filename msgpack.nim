@@ -237,15 +237,11 @@ proc Ext32*(v: Ext): Msg =
 # Nim Object => Msg Object
 #
 
-proc toMsg*(x: bool): Msg =
+proc convM(x: bool): Msg =
   assert(false)
   True
 
-proc toMsg*(x: int): Msg =
-  ## Given x of int and returns a Msg object that is most compression-effective.
-  ## The rule of thumb is use toMsg if you don't know in advance what Msg type it
-  ## will become, otherwise use specific conversion to Msg which can reduce
-  ## overhead to determine the Msg type.
+proc convM(x: int): Msg =
   if 0 <= x:
     if x < 0b10000000:
       PFixNum(cast[uint8](x.toU8))
@@ -269,11 +265,11 @@ proc toMsg*(x: int): Msg =
     else:
       Int64(x.int64)
 
-proc toMsg*(x: float): Msg =
+proc convM(x: float): Msg =
   assert(false)
   Nil # TODO
 
-proc toMsg*(x: string): Msg =
+proc convM(x: string): Msg =
   let sz = len(x)
   if sz < 32:
     FixStr(x)
@@ -287,7 +283,7 @@ proc toMsg*(x: string): Msg =
     assert(false)
     nil
 
-proc toMsg*(x: seq[byte]): Msg =
+proc convM(x: seq[byte]): Msg =
   let sz = len(x)
   if sz < 0x100:
     Bin8(x)
@@ -299,7 +295,7 @@ proc toMsg*(x: seq[byte]): Msg =
     assert(false)
     nil
 
-proc toMsg*(x: seq[Msg]): Msg =
+proc convM(x: seq[Msg]): Msg =
   let sz = len(x)
   if sz < 16:
     FixArray(x)
@@ -311,7 +307,7 @@ proc toMsg*(x: seq[Msg]): Msg =
     assert(false)
     nil
 
-proc toMsg*(x: seq[tuple[key:Msg, val:Msg]]): Msg =
+proc convM(x: seq[tuple[key:Msg, val:Msg]]): Msg =
   let sz = len(x)
   if sz < 16:
     FixMap(x)
@@ -323,7 +319,7 @@ proc toMsg*(x: seq[tuple[key:Msg, val:Msg]]): Msg =
     assert(false)
     nil
 
-proc toMsg*(x: Ext): Msg =
+proc convM(x: Ext): Msg =
   let sz = len(x.data)
   if sz == 1:
     FixExt1(x)
@@ -347,31 +343,38 @@ proc toMsg*(x: Ext): Msg =
 #
 
 type Wrappable = generic x
-  let x: Msg = wrap(x)
+  wrap(x) is Msg
+
+proc wrap*(x: Msg): Msg =
+  x
 
 proc wrap*(x: bool): Msg =
-  toMsg(x)
+  convM(x)
 
 proc wrap*(x: int): Msg =
-  toMsg(x)
+  ## Given x of int and returns a Msg object that is most compression-effective.
+  ## The rule of thumb is use toMsg if you don't know in advance what Msg type it
+  ## will become, otherwise use specific conversion to Msg which can reduce
+  ## overhead to determine the Msg type.
+  convM(x)
 
 proc wrap*(x: float): Msg =
-  toMsg(x)
+  convM(x)
 
 proc wrap*(x: string): Msg =
-  toMsg(x)
+  convM(x)
 
 proc wrap*(x: seq[byte]): Msg =
-  toMsg(x)
+  convM(x)
 
 proc wrap*(x: Ext): Msg =
-  toMsg(x)
+  convM(x)
 
 proc wrap*[T:Wrappable](x: seq[T]): Msg =
-  x.map(wrap).toMsg
+  x.map(wrap).convM
 
 proc wrap*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
-  x.map(proc (e: tuple[key: K, val: V]): auto = (wrap(e.key), wrap(e.val))).toMsg
+  x.map(proc (e: tuple[key: K, val: V]): auto = (wrap(e.key), wrap(e.val))).convM
 
 # ------------------------------------------------------------------------------
 
@@ -1090,7 +1093,7 @@ when isMainModule:
   t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
   # t(FixArray(toseq(@[FixArray(toseq(@[True, False])), FixArray(toseq(@[True, False]))])))
 
-  let x:Msg = wrap(@[1,2])
+  let x:Msg = wrap(@[Int8(1),Int32(2)])
   echo x
 
   let y:Msg = wrap(@[(1,2), (3,4)])
