@@ -38,10 +38,10 @@ assert(st.getPosition == 0)
 # any Msg types is allowed.
 #
 # In xs we can mix specific conversion (PFixNum) and generic
-# conversion (unwrap or toMsg).
-let xs = @[PFixNum(5), (-3).toMsg]
-let ys = @[("a".toMsg, xs.toMsg), (wrap("b"), wrap(@[1, 2, 3]))]
-st.pack(ys.toMsg) # Serialize!
+# conversion (unwrap).
+let xs: Msg = wrap(@[PFixNum(5), (-3).wrap])
+let ys: Msg = wrap(@[("a".wrap, xs.wrap), ("b".wrap, @[1, 2, 3].wrap)])
+st.pack(ys.wrap) # Serialize!
 
 # We need to reset the cursor to the beginning of the target
 # byte sequence.

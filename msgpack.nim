@@ -353,7 +353,7 @@ proc wrap*(x: bool): Msg =
 
 proc wrap*(x: int): Msg =
   ## Given x of int and returns a Msg object that is most compression-effective.
-  ## The rule of thumb is use toMsg if you don't know in advance what Msg type it
+  ## The rule of thumb is use wrap if you don't know in advance what Msg type it
   ## will become, otherwise use specific conversion to Msg which can reduce
   ## overhead to determine the Msg type.
   convM(x)
@@ -375,6 +375,38 @@ proc wrap*[T:Wrappable](x: seq[T]): Msg =
 
 proc wrap*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
   x.map(proc (e: tuple[key: K, val: V]): auto = (wrap(e.key), wrap(e.val))).convM
+
+#
+# Implicit converter
+# (experimental)
+#
+
+converter toMsg*(x: Msg): Msg =
+  x
+
+converter toMsg*(x: bool): Msg =
+  wrap(x)
+
+converter toMsg*(x: int): Msg =
+  wrap(x)
+
+converter toMsg*(x: float): Msg =
+  wrap(x)
+
+converter toMsg*(x: string): Msg =
+  wrap(x)
+
+converter toMsg*(x: seq[byte]): Msg =
+  wrap(x)
+
+converter toMsg*(x: Ext): Msg =
+  wrap(x)
+
+converter toMsg*[T:Wrappable](x: seq[T]): Msg =
+  wrap(x)
+
+converter toMsg*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
+  wrap(x)
 
 # ------------------------------------------------------------------------------
 
@@ -1093,11 +1125,23 @@ when isMainModule:
   t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
   # t(FixArray(toseq(@[FixArray(toseq(@[True, False])), FixArray(toseq(@[True, False]))])))
 
-  let x:Msg = wrap(@[Int8(1),Int32(2)])
-  echo x
+  let a: Msg = @[Int8(1),Int32(2)]
+  echo a
 
-  let y:Msg = wrap(@[(1,2), (3,4)])
-  echo y
+  let b: Msg = @[@[1], @[2]]
+  echo b
 
-  let z: Msg = wrap(@[@[1], @[2]])
-  echo z
+  let c: Msg = wrap(@[(1,1), (2,2)])
+  echo c
+
+  let f: Msg = wrap(@["a", "b"])
+  echo f
+
+  let g: Msg = wrap(@[("a", "c"), ("b", "d")])
+  echo g
+
+  # let e: Msg = wrap(@[(1,"a"), (2,"b")])
+  # echo e
+
+  # let d: Msg = wrap(@[(1,@[1,2]), (3,@[1,2])])
+  # echo d
