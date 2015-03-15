@@ -98,7 +98,7 @@ type
     of mkExt16: vExt16: Ext
     of mkExt32: vExt32: Ext
 
-proc `$`(msg: Msg): string =
+proc `$`*(msg: Msg): string =
   $(msg[])
 
 # Factory methods should be inlined
