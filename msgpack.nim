@@ -342,7 +342,7 @@ proc convM(x: Ext): Msg =
 # Wrappable Type Class
 #
 
-type Wrappable = generic x
+type Wrappable = concept x
   wrap(x) is Msg
 
 proc wrap*(x: Msg): Msg =
