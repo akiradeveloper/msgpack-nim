@@ -1,3 +1,5 @@
+I will start this project once Nim compiler reaches 1.0
+
 # msgpack-nim
 
 A MessagePack binding for Nim
