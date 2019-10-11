@@ -243,7 +243,7 @@ proc convM(x: bool): Msg =
 
 proc convM(x: int): Msg =
   if 0 <= x:
-    if x < 0b10000000:
+    if x < 128:
       PFixNum(cast[uint8](x.toU8))
     elif x < 0x100:
       UInt8(cast[uint8](x.toU8))
@@ -265,9 +265,10 @@ proc convM(x: int): Msg =
     else:
       Int64(x.int64)
 
+# TODO これはガチのTODOです
 proc convM(x: float): Msg =
   assert(false)
-  Nil # TODO
+  Nil
 
 proc convM(x: string): Msg =
   let sz = len(x)
@@ -1122,27 +1123,5 @@ when isMainModule:
   t(Ext32((12, @[cast[byte](1),2,3])))
 
   t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
-  # t(FixArray(toseq(@[FixArray(toseq(@[True, False])), FixArray(toseq(@[True, False]))])))
 
-  let a: Msg = @[Int8(1),Int32(2)]
-  echo a
 
-  let b: Msg = @[@[1], @[2]]
-  echo b
-
-  let cc: seq[tuple[key: int, val:int]] = @[(1,1), (2,2)]
-  let c: Msg = wrap(cc)
-  echo c
-
-  let f: Msg = wrap(@["a", "b"])
-  echo f
-
-  let g: Msg = wrap(@[("a", "c"), ("b", "d")])
-  echo g
-
-  # let ee: seq[tuple[key: int, val: string]] = @[(1, "a"), (2, "b")]
-  # let e: Msg = wrap(ee)
-  # echo e
-
-  # let d: Msg = wrap(@[(1,@[1,2]), (3,@[1,2])])
-  # echo d
