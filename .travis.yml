@@ -6,10 +6,10 @@ env:
   - BRANCH="devel"
 install:
   - uname -a
-  - git clone -b $BRANCH git://github.com/Araq/Nim.git; cd Nim; git clone -b $BRANCH --depth 1 git://github.com/nim-lang/csources; cd csources && sh build.sh; cd ..; bin/nim c koch; ./koch boot -d:release; cd ..
+  - curl https://nim-lang.org/choosenim/init.sh -sSf | sh
   - cabal install quickcheck
 before_script:
-  - export PATH=`pwd`/Nim/bin:$PATH
+  - export PATH=~/.nimble/bin:$PATH
 script:
   - set -e
   - set -x
