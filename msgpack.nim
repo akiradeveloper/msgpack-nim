@@ -6,7 +6,6 @@
 import sequtils
 import streams
 import endians
-import unsigned
 
 #
 # MessagePack Core
@@ -18,7 +17,8 @@ type
   b32 = uint32
   b64 = uint64
 
-type Ext* = tuple[typ:int, data:seq[byte]]
+# typeではなくてkindの方が良さそう
+type Ext* = tuple[kind:int, data:seq[byte]]
 
 type
   MsgKind* = enum
@@ -378,8 +378,9 @@ proc wrap*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
 
 #
 # Implicit converter
-# (experimental)
 #
+
+# TODO ただのエイリアスのようなので処分してもいいかも
 
 converter toMsg*(x: Msg): Msg =
   x
@@ -436,8 +437,10 @@ proc unwrapInt*(x: Msg): int =
     x.vUInt16.int
   of mkUInt32:
     x.vUInt32.int
+  # FIXME
+  # と書いてあるのは、32ビットの時におかしいからかも知れない
   of mkUInt64:
-    x.vUInt64.int # FIXME
+    x.vUInt64.int 
   of mkInt8:
     x.vInt8.int
   of mkInt16:
@@ -466,7 +469,7 @@ proc unwrapStr*(x: Msg): string =
     x.vStr32
   else:
     assert(false)
-    nil
+    ""
 
 proc unwrapBin*(x: Msg): seq[byte] =
   case x.kind:
@@ -478,7 +481,7 @@ proc unwrapBin*(x: Msg): seq[byte] =
     x.vBin32
   else:
     assert(false)
-    nil
+    @[]
 
 proc unwrapArray*(x: Msg): seq[Msg] =
   case x.kind:
@@ -490,7 +493,7 @@ proc unwrapArray*(x: Msg): seq[Msg] =
     x.vArray32
   else:
     assert(false)
-    nil
+    @[]
  
 proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
   case x.kind:
@@ -502,7 +505,7 @@ proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
     x.vMap32
   else:
     assert(false)
-    nil
+    @[]
 
 proc unwrapExt*(x: Msg): Ext =
   case x.kind:
@@ -565,9 +568,7 @@ type Packer = ref object
   buf: PackBuf
 
 proc mkPacker(buf: PackBuf): Packer =
-  Packer (
-    buf: buf
-  )
+  Packer(buf: buf)
 
 proc pack(pc: Packer, msg: Msg)
 
@@ -876,9 +877,7 @@ proc popMap(upc: Unpacker, size: int): seq[tuple[key:Msg, val:Msg]] =
     result[i] = (upc.unpack, upc.unpack)
 
 proc mkUnpacker(buf: UnpackBuf): Unpacker =
-  Unpacker (
-    buf: buf
-  )
+  Unpacker(buf: buf)
 
 proc unpack(upc: Unpacker): Msg =
   let buf = upc.buf
@@ -889,7 +888,7 @@ proc unpack(upc: Unpacker): Msg =
   case h
   of 0x90..0x9f:
     #echo "fixarray"
-    let sz: int = h and 0x0f
+    let sz = h and 0x0f
     FixArray(upc.popArray(sz.int))
   of 0xdc:
     #echo "array16"
@@ -901,16 +900,16 @@ proc unpack(upc: Unpacker): Msg =
     Array32(upc.popArray(sz.int))
   of 0x80..0x8f:
     #echo "fixmap"
-    let sz: int = h and 0x0f
-    FixMap(upc.popMap(sz))
+    let sz = h and 0x0f
+    FixMap(upc.popMap(sz.int))
   of 0xde:
     #echo "map16"
-    let sz: int = cast[int](buf.popBe16)
-    Map16(upc.popMap(sz))
+    let sz = cast[uint16](buf.popBe16)
+    Map16(upc.popMap(sz.int))
   of 0xdf:
     #echo "map32"
-    let sz: int = cast[int](buf.popBe32)
-    Map32(upc.popMap(sz))
+    let sz = cast[uint32](buf.popBe32)
+    Map32(upc.popMap(sz.int))
   of 0xc0:
     #echo "nil"
     Nil
@@ -922,8 +921,8 @@ proc unpack(upc: Unpacker): Msg =
     False
   of 0x00..0x7f:
     #echo "pfixnum"
-    let v: int = h and 0x7f
-    PFixNum(cast[uint8](v.toU8))
+    let v = h and 0x7f
+    PFixNum(cast[uint8](v))
   of 0xe0..0xff:
     #echo "nfixnum"
     NFixNum(cast[int8](h))
@@ -1071,8 +1070,8 @@ proc unpack*(st: Stream): Msg =
 # ------------------------------------------------------------------------------
 
 proc t*(msg: Msg) =
-  ## Test by cyclic translation. Don't use.
-  let before = $expr(msg)
+  # もともと$expr(msg)だった。怪しい
+  let before = $msg
   #echo before
   let st = newStringStream()
   assert(st.getPosition == 0)
@@ -1080,7 +1079,7 @@ proc t*(msg: Msg) =
   assert(st.getPosition != 0)
   st.setPosition(0)
   let unpacked = st.unpack
-  let after = $expr(unpacked)
+  let after = $unpacked
   #echo after
   assert(before == after)
 
