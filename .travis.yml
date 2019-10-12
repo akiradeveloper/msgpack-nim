@@ -1,11 +1,14 @@
 os:
   - linux
 language: haskell
+cache:
+  - $HOME/.stack
 env:
   # - BRANCH="master"
   - BRANCH="devel"
 install:
   - uname -a
+  - curl -sSL https://get.haskellstack.org/ | sh
   - curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 before_script:
   - export PATH=~/.nimble/bin:$PATH
