@@ -233,303 +233,7 @@ proc Ext32*(v: Ext): Msg =
 
 # ------------------------------------------------------------------------------
 
-#
-# Nim Object => Msg Object
-#
-
-proc convM(x: bool): Msg =
-  assert(false)
-  True
-
-# FIXME
-# 32bit環境で64ビットの値をラップ出来なくなります
-proc convM(x: int): Msg =
-  if 0 <= x:
-    if x < 128:
-      PFixNum(uint8(x))
-    elif x < 0x100:
-      UInt8(uint8(x))
-    elif x < 0x10000:
-      UInt16(uint16(x))
-    elif x < 0x100000000:
-      UInt32(uint32(x))
-    else:
-      UInt64(x.uint64)
-  else:
-    if x >= -32:
-      NFixNum(int8(x))
-    elif x >= -128:
-      Int8(int8(x))
-    elif x >= -(1 shl 15):
-      Int16(int16(x))
-    elif x >= -(1 shl 31):
-      Int32(int32(x))
-    else:
-      Int64(x.int64)
-
-# TODO これはガチのTODOです
-proc convM(x: float): Msg =
-  assert(false)
-  Nil
-
-proc convM(x: string): Msg =
-  let sz = len(x)
-  if sz < 32:
-    FixStr(x)
-  elif sz < 0x100:
-    Str8(x)
-  elif sz < 0x10000:
-    Str16(x)
-  elif sz < 0x100000000:
-    Str32(x)
-  else:
-    assert(false)
-    nil
-
-proc convM(x: seq[byte]): Msg =
-  let sz = len(x)
-  if sz < 0x100:
-    Bin8(x)
-  elif sz < 0x10000:
-    Bin16(x)
-  elif sz < 0x100000000:
-    Bin32(x)
-  else:
-    assert(false)
-    nil
-
-proc convM(x: seq[Msg]): Msg =
-  let sz = len(x)
-  if sz < 16:
-    FixArray(x)
-  elif sz < 0x10000:
-    Array16(x)
-  elif sz < 0x100000000:
-    Array32(x)
-  else:
-    assert(false)
-    nil
-
-proc convM(x: seq[tuple[key:Msg, val:Msg]]): Msg =
-  let sz = len(x)
-  if sz < 16:
-    FixMap(x)
-  elif sz < 0x10000:
-    Map16(x)
-  elif sz < 0x100000000:
-    Map32(x)
-  else:
-    assert(false)
-    nil
-
-proc convM(x: Ext): Msg =
-  let sz = len(x.data)
-  if sz == 1:
-    FixExt1(x)
-  elif sz == 2:
-    FixExt2(x)
-  elif sz == 4:
-    FixExt4(x)
-  elif sz == 8:
-    FixExt8(x)
-  elif sz == 16:
-    FixExt16(x)
-  elif sz < 0x100:
-    Ext8(x)
-  elif sz < 0x10000:
-    Ext16(x)
-  else: # FIXME
-    Ext32(x)
-
-#
-# Wrappable Type Class
-#
-
-type Wrappable = concept x
-  wrap(x) is Msg
-
-proc wrap*(x: Msg): Msg =
-  x
-
-proc wrap*(x: bool): Msg =
-  convM(x)
-
-proc wrap*(x: int): Msg =
-  ## Given x of int and returns a Msg object that is most compression-effective.
-  ## The rule of thumb is use wrap if you don't know in advance what Msg type it
-  ## will become, otherwise use specific conversion to Msg which can reduce
-  ## overhead to determine the Msg type.
-  convM(x)
-
-proc wrap*(x: float): Msg =
-  convM(x)
-
-proc wrap*(x: string): Msg =
-  convM(x)
-
-proc wrap*(x: seq[byte]): Msg =
-  convM(x)
-
-proc wrap*(x: Ext): Msg =
-  convM(x)
-
-proc wrap*[T:Wrappable](x: seq[T]): Msg =
-  x.map(wrap).convM
-
-proc wrap*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
-  x.map(proc (e: tuple[key: K, val: V]): auto = (wrap(e.key), wrap(e.val))).convM
-
-#
-# Implicit converter
-#
-
-# TODO ただのエイリアスのようなので処分してもいいかも
-
-converter toMsg*(x: Msg): Msg =
-  x
-
-converter toMsg*(x: bool): Msg =
-  wrap(x)
-
-converter toMsg*(x: int): Msg =
-  wrap(x)
-
-converter toMsg*(x: float): Msg =
-  wrap(x)
-
-converter toMsg*(x: string): Msg =
-  wrap(x)
-
-converter toMsg*(x: seq[byte]): Msg =
-  wrap(x)
-
-converter toMsg*(x: Ext): Msg =
-  wrap(x)
-
-converter toMsg*[T:Wrappable](x: seq[T]): Msg =
-  wrap(x)
-
-converter toMsg*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
-  wrap(x)
-
-# ------------------------------------------------------------------------------
-
-#
-# Msg Object => Nim Object
-#
-
-proc unwrapBool*(x: Msg): bool =
-  case x.kind:
-  of mkTrue:
-    true
-  of mkFalse:
-    false
-  else:
-    assert(false)
-    false
-
-proc unwrapInt*(x: Msg): int =
-  case x.kind:
-  of mkPFixNum:
-    x.vPFixNum.int
-  of mkNFixNum:
-    x.vNFixNum.int
-  of mkUInt8:
-    x.vUInt8.int
-  of mkUInt16:
-    x.vUInt16.int
-  of mkUInt32:
-    x.vUInt32.int
-  # FIXME
-  # と書いてあるのは、32ビットの時におかしいからかも知れない
-  of mkUInt64:
-    x.vUInt64.int 
-  of mkInt8:
-    x.vInt8.int
-  of mkInt16:
-    x.vInt16.int
-  of mkInt32:
-    x.vInt32.int
-  else:
-    x.vInt64.int
-
-proc unwrapFloat*(x: Msg): float =
-  case x.kind:
-  of mkFloat32:
-    x.vFloat32.float
-  else:
-    x.vFloat64.float
-
-proc unwrapStr*(x: Msg): string =
-  case x.kind:
-  of mkFixStr:
-    x.vFixStr
-  of mkStr8:
-    x.vStr8
-  of mkStr16:
-    x.vStr16
-  of mkStr32:
-    x.vStr32
-  else:
-    assert(false)
-    ""
-
-proc unwrapBin*(x: Msg): seq[byte] =
-  case x.kind:
-  of mkBin8:
-    x.vBin8
-  of mkBin16:
-    x.vBin16
-  of mkBin32:
-    x.vBin32
-  else:
-    assert(false)
-    @[]
-
-proc unwrapArray*(x: Msg): seq[Msg] =
-  case x.kind:
-  of mkFixArray:
-    x.vFixArray
-  of mkArray16:
-    x.vArray16
-  of mkArray32:
-    x.vArray32
-  else:
-    assert(false)
-    @[]
- 
-proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
-  case x.kind:
-  of mkFixMap:
-    x.vFixMap
-  of mkMap16:
-    x.vMap16
-  of mkMap32:
-    x.vMap32
-  else:
-    assert(false)
-    @[]
-
-proc unwrapExt*(x: Msg): Ext =
-  case x.kind:
-  of mkFixExt1:
-    x.vFixExt1
-  of mkFixExt2:
-    x.vFixExt2
-  of mkFixExt4:
-    x.vFixExt4
-  of mkFixExt8:
-    x.vFixExt8
-  of mkFixExt16:
-    x.vFixExt16
-  of mkExt8:
-    x.vExt8
-  of mkExt16:
-    x.vExt16
-  else:
-    x.vExt32 # FIXME
-
-# ------------------------------------------------------------------------------
+# Packing
 
 type PackBuf = ref object
   st: Stream
@@ -829,6 +533,8 @@ proc pack(pc: Packer, msg: Msg) =
 
 # ------------------------------------------------------------------------------
 
+# Unpacking
+
 type UnpackBuf = ref object
   st: Stream
 
@@ -1126,3 +832,287 @@ when isMainModule:
   t(Ext16((12, @[cast[byte](1),2,3])))
   t(Ext32((12, @[cast[byte](1),2,3])))
   t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
+
+# ------------------------------------------------------------------------------
+
+# Wrap
+
+proc convM(x: bool): Msg =
+  assert(false)
+  True
+
+# FIXME
+# 32bit環境で64ビットの値をラップ出来なくなります
+proc convM(x: int): Msg =
+  if 0 <= x:
+    if x < 128:
+      PFixNum(uint8(x))
+    elif x < 0x100:
+      UInt8(uint8(x))
+    elif x < 0x10000:
+      UInt16(uint16(x))
+    elif x < 0x100000000:
+      UInt32(uint32(x))
+    else:
+      UInt64(x.uint64)
+  else:
+    if x >= -32:
+      NFixNum(int8(x))
+    elif x >= -128:
+      Int8(int8(x))
+    elif x >= -(1 shl 15):
+      Int16(int16(x))
+    elif x >= -(1 shl 31):
+      Int32(int32(x))
+    else:
+      Int64(x.int64)
+
+# TODO これはガチのTODOです
+proc convM(x: float): Msg =
+  assert(false)
+  Nil
+
+proc convM(x: string): Msg =
+  let sz = len(x)
+  if sz < 32:
+    FixStr(x)
+  elif sz < 0x100:
+    Str8(x)
+  elif sz < 0x10000:
+    Str16(x)
+  elif sz < 0x100000000:
+    Str32(x)
+  else:
+    assert(false)
+    nil
+
+proc convM(x: seq[byte]): Msg =
+  let sz = len(x)
+  if sz < 0x100:
+    Bin8(x)
+  elif sz < 0x10000:
+    Bin16(x)
+  elif sz < 0x100000000:
+    Bin32(x)
+  else:
+    assert(false)
+    nil
+
+proc convM(x: seq[Msg]): Msg =
+  let sz = len(x)
+  if sz < 16:
+    FixArray(x)
+  elif sz < 0x10000:
+    Array16(x)
+  elif sz < 0x100000000:
+    Array32(x)
+  else:
+    assert(false)
+    nil
+
+proc convM(x: seq[tuple[key:Msg, val:Msg]]): Msg =
+  let sz = len(x)
+  if sz < 16:
+    FixMap(x)
+  elif sz < 0x10000:
+    Map16(x)
+  elif sz < 0x100000000:
+    Map32(x)
+  else:
+    assert(false)
+    nil
+
+proc convM(x: Ext): Msg =
+  let sz = len(x.data)
+  if sz == 1:
+    FixExt1(x)
+  elif sz == 2:
+    FixExt2(x)
+  elif sz == 4:
+    FixExt4(x)
+  elif sz == 8:
+    FixExt8(x)
+  elif sz == 16:
+    FixExt16(x)
+  elif sz < 0x100:
+    Ext8(x)
+  elif sz < 0x10000:
+    Ext16(x)
+  else: # FIXME
+    Ext32(x)
+
+type Wrappable = concept x
+  wrap(x) is Msg
+
+proc wrap*(x: Msg): Msg =
+  x
+
+proc wrap*(x: bool): Msg =
+  convM(x)
+
+proc wrap*(x: int): Msg =
+  ## Given x of int and returns a Msg object that is most compression-effective.
+  ## The rule of thumb is use wrap if you don't know in advance what Msg type it
+  ## will become, otherwise use specific conversion to Msg which can reduce
+  ## overhead to determine the Msg type.
+  convM(x)
+
+proc wrap*(x: float): Msg =
+  convM(x)
+
+proc wrap*(x: string): Msg =
+  convM(x)
+
+proc wrap*(x: seq[byte]): Msg =
+  convM(x)
+
+proc wrap*(x: Ext): Msg =
+  convM(x)
+
+proc wrap*[T:Wrappable](x: seq[T]): Msg =
+  x.map(wrap).convM
+
+proc wrap*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
+  x.map(proc (e: tuple[key: K, val: V]): auto = (wrap(e.key), wrap(e.val))).convM
+
+converter toMsg*(x: Msg): Msg =
+  x
+
+converter toMsg*(x: bool): Msg =
+  wrap(x)
+
+converter toMsg*(x: int): Msg =
+  wrap(x)
+
+converter toMsg*(x: float): Msg =
+  wrap(x)
+
+converter toMsg*(x: string): Msg =
+  wrap(x)
+
+converter toMsg*(x: seq[byte]): Msg =
+  wrap(x)
+
+converter toMsg*(x: Ext): Msg =
+  wrap(x)
+
+converter toMsg*[T:Wrappable](x: seq[T]): Msg =
+  wrap(x)
+
+converter toMsg*[K: Wrappable, V: Wrappable](x: seq[tuple[key: K, val: V]]): Msg =
+  wrap(x)
+
+# ------------------------------------------------------------------------------
+
+# Unwrap
+
+proc unwrapBool*(x: Msg): bool =
+  case x.kind:
+  of mkTrue:
+    true
+  of mkFalse:
+    false
+  else:
+    assert(false)
+    false
+
+proc unwrapInt*(x: Msg): int =
+  case x.kind:
+  of mkPFixNum:
+    x.vPFixNum.int
+  of mkNFixNum:
+    x.vNFixNum.int
+  of mkUInt8:
+    x.vUInt8.int
+  of mkUInt16:
+    x.vUInt16.int
+  of mkUInt32:
+    x.vUInt32.int
+  # FIXME
+  # と書いてあるのは、32ビットの時におかしいからかも知れない
+  of mkUInt64:
+    x.vUInt64.int 
+  of mkInt8:
+    x.vInt8.int
+  of mkInt16:
+    x.vInt16.int
+  of mkInt32:
+    x.vInt32.int
+  else:
+    x.vInt64.int
+
+proc unwrapFloat*(x: Msg): float =
+  case x.kind:
+  of mkFloat32:
+    x.vFloat32.float
+  else:
+    x.vFloat64.float
+
+proc unwrapStr*(x: Msg): string =
+  case x.kind:
+  of mkFixStr:
+    x.vFixStr
+  of mkStr8:
+    x.vStr8
+  of mkStr16:
+    x.vStr16
+  of mkStr32:
+    x.vStr32
+  else:
+    assert(false)
+    ""
+
+proc unwrapBin*(x: Msg): seq[byte] =
+  case x.kind:
+  of mkBin8:
+    x.vBin8
+  of mkBin16:
+    x.vBin16
+  of mkBin32:
+    x.vBin32
+  else:
+    assert(false)
+    @[]
+
+proc unwrapArray*(x: Msg): seq[Msg] =
+  case x.kind:
+  of mkFixArray:
+    x.vFixArray
+  of mkArray16:
+    x.vArray16
+  of mkArray32:
+    x.vArray32
+  else:
+    assert(false)
+    @[]
+ 
+proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
+  case x.kind:
+  of mkFixMap:
+    x.vFixMap
+  of mkMap16:
+    x.vMap16
+  of mkMap32:
+    x.vMap32
+  else:
+    assert(false)
+    @[]
+
+proc unwrapExt*(x: Msg): Ext =
+  case x.kind:
+  of mkFixExt1:
+    x.vFixExt1
+  of mkFixExt2:
+    x.vFixExt2
+  of mkFixExt4:
+    x.vFixExt4
+  of mkFixExt8:
+    x.vFixExt8
+  of mkFixExt16:
+    x.vFixExt16
+  of mkExt8:
+    x.vExt8
+  of mkExt16:
+    x.vExt16
+  else:
+    x.vExt32 # FIXME
