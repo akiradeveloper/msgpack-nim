@@ -290,6 +290,7 @@ proc appendMap(pc: Packer, map: seq[tuple[key:Msg, val:Msg]]) =
 
 proc pack(pc: Packer, msg: Msg) =
   let buf = pc.buf
+
   case msg.kind:
   of mkFixArray:
     #echo "fixarray"
@@ -670,7 +671,7 @@ proc unpack(upc: Unpacker): Msg =
     #echo "fixstr"
     let sz = int(h and 0x1f)
     var s = newString(sz)
-    buf.popData(addr(s[0]), sz)
+    if sz > 0: buf.popData(addr(s[0]), sz)
     FixStr(s)
   of 0xd9:
     #echo "str8"
@@ -823,14 +824,14 @@ when isMainModule:
   t(Bin8(@[cast[byte](4),5,6]))
   t(Bin16(@[cast[byte](4),5,6]))
   t(Bin32(@[cast[byte](4),5,6]))
-  t(FixExt1((12i8, @[cast[byte](1)])))
-  t(FixExt2((12i8, @[cast[byte](1), 2])))
-  t(FixExt4((12i8, @[cast[byte](1), 2, 3, 4])))
-  t(FixExt8((12i8, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8])))
-  t(FixExt16((12i8, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])))
-  t(Ext8((12i8, @[cast[byte](1),2,3])))
-  t(Ext16((12i8, @[cast[byte](1),2,3])))
-  t(Ext32((12i8, @[cast[byte](1),2,3])))
+  t(FixExt1((12'i8, @[cast[byte](1)])))
+  t(FixExt2((12'i8, @[cast[byte](1), 2])))
+  t(FixExt4((12'i8, @[cast[byte](1), 2, 3, 4])))
+  t(FixExt8((12'i8, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8])))
+  t(FixExt16((12'i8, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])))
+  t(Ext8((12'i8, @[cast[byte](1),2,3])))
+  t(Ext16((12'i8, @[cast[byte](1),2,3])))
+  t(Ext32((12'i8, @[cast[byte](1),2,3])))
   t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
 
 # ------------------------------------------------------------------------------
