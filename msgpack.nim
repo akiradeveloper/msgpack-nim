@@ -839,11 +839,11 @@ when isMainModule:
 # Wrap
 
 proc convM(x: bool): Msg =
-  assert(false)
-  True
+  if x:
+    True
+  else:
+    False
 
-# FIXME
-# 32bit環境で64ビットの値をラップ出来なくなります
 proc convM(x: int): Msg =
   if 0 <= x:
     if x < 128:
@@ -868,10 +868,8 @@ proc convM(x: int): Msg =
     else:
       Int64(x.int64)
 
-# TODO これはガチのTODOです
 proc convM(x: float): Msg =
-  assert(false)
-  Nil
+  Float64(x)
 
 proc convM(x: string): Msg =
   let sz = len(x)
@@ -884,8 +882,7 @@ proc convM(x: string): Msg =
   elif sz < 0x100000000:
     Str32(x)
   else:
-    assert(false)
-    nil
+    quit()
 
 proc convM(x: seq[byte]): Msg =
   let sz = len(x)
@@ -896,8 +893,7 @@ proc convM(x: seq[byte]): Msg =
   elif sz < 0x100000000:
     Bin32(x)
   else:
-    assert(false)
-    nil
+    quit()
 
 proc convM(x: seq[Msg]): Msg =
   let sz = len(x)
@@ -908,8 +904,7 @@ proc convM(x: seq[Msg]): Msg =
   elif sz < 0x100000000:
     Array32(x)
   else:
-    assert(false)
-    nil
+    quit()
 
 proc convM(x: seq[tuple[key:Msg, val:Msg]]): Msg =
   let sz = len(x)
@@ -920,8 +915,7 @@ proc convM(x: seq[tuple[key:Msg, val:Msg]]): Msg =
   elif sz < 0x100000000:
     Map32(x)
   else:
-    assert(false)
-    nil
+    quit()
 
 proc convM(x: Ext): Msg =
   let sz = len(x.data)
@@ -939,7 +933,7 @@ proc convM(x: Ext): Msg =
     Ext8(x)
   elif sz < 0x10000:
     Ext16(x)
-  else: # FIXME
+  else:
     Ext32(x)
 
 type Wrappable = concept x
@@ -1014,8 +1008,7 @@ proc unwrapBool*(x: Msg): bool =
   of mkFalse:
     false
   else:
-    assert(false)
-    false
+    quit()
 
 proc unwrapInt*(x: Msg): int =
   case x.kind:
@@ -1029,8 +1022,6 @@ proc unwrapInt*(x: Msg): int =
     x.vUInt16.int
   of mkUInt32:
     x.vUInt32.int
-  # FIXME
-  # と書いてあるのは、32ビットの時におかしいからかも知れない
   of mkUInt64:
     x.vUInt64.int 
   of mkInt8:
@@ -1039,15 +1030,19 @@ proc unwrapInt*(x: Msg): int =
     x.vInt16.int
   of mkInt32:
     x.vInt32.int
-  else:
+  of mkInt64:
     x.vInt64.int
+  else:
+    quit()
 
 proc unwrapFloat*(x: Msg): float =
   case x.kind:
   of mkFloat32:
     x.vFloat32.float
-  else:
+  of mkFloat64:
     x.vFloat64.float
+  else:
+    quit()
 
 proc unwrapStr*(x: Msg): string =
   case x.kind:
@@ -1060,8 +1055,7 @@ proc unwrapStr*(x: Msg): string =
   of mkStr32:
     x.vStr32
   else:
-    assert(false)
-    ""
+    quit()
 
 proc unwrapBin*(x: Msg): seq[byte] =
   case x.kind:
@@ -1072,8 +1066,7 @@ proc unwrapBin*(x: Msg): seq[byte] =
   of mkBin32:
     x.vBin32
   else:
-    assert(false)
-    @[]
+    quit()
 
 proc unwrapArray*(x: Msg): seq[Msg] =
   case x.kind:
@@ -1084,8 +1077,7 @@ proc unwrapArray*(x: Msg): seq[Msg] =
   of mkArray32:
     x.vArray32
   else:
-    assert(false)
-    @[]
+    quit()
  
 proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
   case x.kind:
@@ -1096,8 +1088,7 @@ proc unwrapMap*(x: Msg): seq[tuple[key:Msg, val:Msg]] =
   of mkMap32:
     x.vMap32
   else:
-    assert(false)
-    @[]
+    quit()
 
 proc unwrapExt*(x: Msg): Ext =
   case x.kind:
@@ -1115,5 +1106,7 @@ proc unwrapExt*(x: Msg): Ext =
     x.vExt8
   of mkExt16:
     x.vExt16
+  of mkExt32:
+    x.vExt32
   else:
-    x.vExt32 # FIXME
+    quit()
