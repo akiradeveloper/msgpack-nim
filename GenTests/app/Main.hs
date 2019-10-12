@@ -135,7 +135,7 @@ instance Arbitrary Msg where
       , (vw, return MsgTrue)
       , (vw, return MsgFalse)
       , (vw, liftM MsgPFixNum $ choose (0, 63))
-      , (vw, liftM MsgNFixNum $ choose (-32, 0))
+      , (vw, liftM MsgNFixNum $ choose (-32, -1))
       , (vw, liftM MsgUInt8 $ choose (0, maxUS 8))
       , (vw, liftM MsgUInt16 $ choose (0, maxUS 16))
       , (vw, liftM MsgUInt32 $ choose (0, maxUS 32))
