@@ -18,7 +18,7 @@ type
   be64 = uint64
 
 # typeではなくてkindの方が良さそう
-type Ext* = tuple[kind:int, data:seq[byte]]
+type Ext* = tuple[typ:int8, data:seq[byte]]
 
 type
   MsgKind* = enum
@@ -465,7 +465,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(3)
     buf.appendHeader(0xd4)
     var (a, b) = msg.vFixExt1
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     buf.appendData(addr(b[0]), 1)
   of mkFixExt2:
@@ -473,7 +473,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(4)
     buf.appendHeader(0xd5)
     var (a, b) = msg.vFixExt2
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     buf.appendData(addr(b[0]), 2)
   of mkFixExt4:
@@ -481,7 +481,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(6)
     buf.appendHeader(0xd6)
     var (a, b) = msg.vFixExt4
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     buf.appendData(addr(b[0]), 4)
   of mkFixExt8:
@@ -489,7 +489,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(10)
     buf.appendHeader(0xd7)
     var (a, b) = msg.vFixExt8
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     buf.appendData(addr(b[0]), 8)
   of mkFixExt16:
@@ -497,7 +497,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(18)
     buf.appendHeader(0xd8)
     var (a, b) = msg.vFixExt16
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     buf.appendData(addr(b[0]), 16)
   of mkExt8:
@@ -507,7 +507,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+1+1+sz)
     buf.appendHeader(0xc7)
     buf.appendBe8(uint8(sz))
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     if sz > 0: buf.appendData(addr(b[0]), sz)
   of mkExt16:
@@ -517,7 +517,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+2+1+sz)
     buf.appendHeader(0xc8)
     buf.appendBe16(uint16(sz))
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     if sz > 0: buf.appendData(addr(b[0]), sz)
   of mkExt32:
@@ -527,7 +527,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+4+1+sz)
     buf.appendHeader(0xc9)
     buf.appendBe32(uint32(sz))
-    buf.appendBe8(uint8(a))
+    buf.appendBe8(cast[uint8](a))
     # var m = msg
     if sz > 0: buf.appendData(addr(b[0]), sz)
 
@@ -710,52 +710,52 @@ proc unpack(upc: Unpacker): Msg =
     Bin32(d)
   of 0xd4:
     #echo "fixext1"
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](1)
     buf.popData(addr(d[0]), 1)
     FixExt1((t, d))
   of 0xd5:
     #echo "fixext2"
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](2)
     buf.popData(addr(d[0]), 2)
     FixExt2((t, d))
   of 0xd6:
     #echo "fixext4"
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](4)
     buf.popData(addr(d[0]), 4)
     FixExt4((t, d))
   of 0xd7:
     #echo "fixext8"
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](8)
     buf.popData(addr(d[0]), 8)
     FixExt8((t, d))
   of 0xd8:
     #echo "fixext16"
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](16)
     buf.popData(addr(d[0]), 16)
     FixExt16((t, d))
   of 0xc7:
     #echo "ext8"
     let sz = int(buf.popBe8)
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](sz)
     if sz > 0: buf.popData(addr(d[0]), sz)
     Ext8((t, d))
   of 0xc8:
     #echo "ext16"
     let sz = int(buf.popBe16)
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](sz)
     if sz > 0: buf.popData(addr(d[0]), sz)
     Ext16((t, d))
   of 0xc9:
     #echo "ext32"
     let sz = int(buf.popBe32)
-    let t = int(buf.popBe8)
+    let t = cast[int8](buf.popBe8)
     var d = newSeq[byte](sz)
     if sz > 0: buf.popData(addr(d[0]), sz)
     Ext32((t, d))
@@ -823,14 +823,14 @@ when isMainModule:
   t(Bin8(@[cast[byte](4),5,6]))
   t(Bin16(@[cast[byte](4),5,6]))
   t(Bin32(@[cast[byte](4),5,6]))
-  t(FixExt1((12, @[cast[byte](1)])))
-  t(FixExt2((12, @[cast[byte](1), 2])))
-  t(FixExt4((12, @[cast[byte](1), 2, 3, 4])))
-  t(FixExt8((12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8])))
-  t(FixExt16((12, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])))
-  t(Ext8((12, @[cast[byte](1),2,3])))
-  t(Ext16((12, @[cast[byte](1),2,3])))
-  t(Ext32((12, @[cast[byte](1),2,3])))
+  t(FixExt1((12i8, @[cast[byte](1)])))
+  t(FixExt2((12i8, @[cast[byte](1), 2])))
+  t(FixExt4((12i8, @[cast[byte](1), 2, 3, 4])))
+  t(FixExt8((12i8, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8])))
+  t(FixExt16((12i8, @[cast[byte](1), 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])))
+  t(Ext8((12i8, @[cast[byte](1),2,3])))
+  t(Ext16((12i8, @[cast[byte](1),2,3])))
+  t(Ext32((12i8, @[cast[byte](1),2,3])))
   t(FixArray(@[FixArray(@[True, False]), PFixNum(18)]))
 
 # ------------------------------------------------------------------------------

@@ -80,14 +80,14 @@ msgShow (MsgStr32 s) = "Str32(" ++ show s ++ ")"
 msgShow (MsgBin8 xs) = "Bin8(@[" ++ binShow xs ++ "])"
 msgShow (MsgBin16 xs) = "Bin16(@[" ++ binShow xs ++ "])"
 msgShow (MsgBin32 xs) = "Bin32(@[" ++ binShow xs ++ "])"
-msgShow (MsgFixExt1 t xs) = "FixExt1((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
-msgShow (MsgFixExt2 t xs) = "FixExt2((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
-msgShow (MsgFixExt4 t xs) = "FixExt4((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
-msgShow (MsgFixExt8 t xs) = "FixExt8((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
-msgShow (MsgFixExt16 t xs) = "FixExt16((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
-msgShow (MsgExt8 t xs) = "Ext8((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
-msgShow (MsgExt16 t xs) = "Ext16((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
-msgShow (MsgExt32 t xs) = "Ext32((" ++ show t ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgFixExt1 t xs) = "FixExt1((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgFixExt2 t xs) = "FixExt2((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgFixExt4 t xs) = "FixExt4((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgFixExt8 t xs) = "FixExt8((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgFixExt16 t xs) = "FixExt16((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgExt8 t xs) = "Ext8((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgExt16 t xs) = "Ext16((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
+msgShow (MsgExt32 t xs) = "Ext32((" ++ show t ++ "i8" ++ ", @[" ++ binShow xs ++ "]))"
 
 instance Show Msg where
   show = msgShow
@@ -122,6 +122,11 @@ maxS n = (1 `shiftL` (n - 1)) - 1
 -- max unsigned
 maxUS n = (1 `shiftL` n) - 1
 
+-- type is a signed 8-bit signed integer
+-- type < 0 is reserved for future extension including 2-byte type information
+extType :: Gen Int
+extType = choose (0, 127)
+
 instance Arbitrary Msg where 
   arbitrary = do
     frequency [
@@ -153,14 +158,14 @@ instance Arbitrary Msg where
       , (vw, liftM MsgBin8 $ choose (0, 10) >>= randBinSeq)
       , (vw, liftM MsgBin16 $ choose (0, 10) >>= randBinSeq)
       , (vw, liftM MsgBin32 $ choose (0, 10) >>= randBinSeq)
-      , (vw, liftM2 MsgFixExt1 (choose (0,255)) $ randBinSeq 1)
-      , (vw, liftM2 MsgFixExt2 (choose (0,255)) $ randBinSeq 2)
-      , (vw, liftM2 MsgFixExt4 (choose (0,255)) $ randBinSeq 4)
-      , (vw, liftM2 MsgFixExt8 (choose (0,255)) $ randBinSeq 8)
-      , (vw, liftM2 MsgFixExt16 (choose (0,255)) $ randBinSeq 16)
-      , (vw, liftM2 MsgExt8 (choose (0,255)) $ choose (0, 10) >>= randBinSeq)
-      , (vw, liftM2 MsgExt16 (choose (0,255)) $ choose (0, 10) >>= randBinSeq)
-      , (vw, liftM2 MsgExt32 (choose (0,255)) $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM2 MsgFixExt1 extType $ randBinSeq 1)
+      , (vw, liftM2 MsgFixExt2 extType $ randBinSeq 2)
+      , (vw, liftM2 MsgFixExt4 extType $ randBinSeq 4)
+      , (vw, liftM2 MsgFixExt8 extType $ randBinSeq 8)
+      , (vw, liftM2 MsgFixExt16 extType $ randBinSeq 16)
+      , (vw, liftM2 MsgExt8 extType $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM2 MsgExt16 extType $ choose (0, 10) >>= randBinSeq)
+      , (vw, liftM2 MsgExt32 extType $ choose (0, 10) >>= randBinSeq)
       ]
 
 main = do
