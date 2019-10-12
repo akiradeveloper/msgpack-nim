@@ -7,7 +7,6 @@ env:
 install:
   - uname -a
   - curl https://nim-lang.org/choosenim/init.sh -sSf | sh
-  - cabal install quickcheck
 before_script:
   - export PATH=~/.nimble/bin:$PATH
 script:

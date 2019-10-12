@@ -3,8 +3,8 @@ test:
 	./msgpack
 
 quickcheck:
-	ghc GenTests.hs
-	./GenTests > test
+	stack build
+	stack exec GenTests-exe > test
 	ruby gentest.rb test
 	nim c -d:release test
 	./test
