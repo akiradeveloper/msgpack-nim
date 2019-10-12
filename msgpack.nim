@@ -593,42 +593,42 @@ proc pack(pc: Packer, msg: Msg) =
     let h = uint8(0x90) or uint8(sz)
     buf.ensureMore(1)
     buf.appendHeader(h)
-    pc.appendArray(msg.vFixArray)
+    if sz > 0: pc.appendArray(msg.vFixArray)
   of mkArray16:
     #echo "array16"
     let sz = len(msg.vArray16)
     buf.ensureMore(3)
     buf.appendHeader(0xdc)
     buf.appendBe16(uint16(sz))
-    pc.appendArray(msg.vArray16)
+    if sz > 0: pc.appendArray(msg.vArray16)
   of mkArray32:
     #echo "array32"
     let sz = len(msg.vArray32)
     buf.ensureMore(5)
     buf.appendHeader(0xdd)
     buf.appendBe32(uint32(sz))
-    pc.appendArray(msg.vArray32)
+    if sz > 0: pc.appendArray(msg.vArray32)
   of mkFixMap:
     #echo "fixmap"
     let sz = len(msg.vFixMap)
     let h = uint8(0x80) or uint8(sz)
     buf.ensureMore(1)
     buf.appendHeader(h)
-    pc.appendMap(msg.vFixMap)
+    if sz > 0: pc.appendMap(msg.vFixMap)
   of mkMap16:
     #echo "map16"
     let sz = len(msg.vMap16)
     buf.ensureMore(3)
     buf.appendHeader(0xde)
     buf.appendBe16(uint16(sz))
-    pc.appendMap(msg.vMap16)
+    if sz > 0: pc.appendMap(msg.vMap16)
   of mkMap32:
     #echo "map32"
     let sz = len(msg.vMap32)
     buf.ensureMore(5)
     buf.appendHeader(0xdf)
     buf.appendBe32(uint32(sz))
-    pc.appendMap(msg.vMap32)
+    if sz > 0: pc.appendMap(msg.vMap32)
   of mkNil:
     #echo "nil"
     buf.ensureMore(1)
@@ -707,7 +707,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.ensureMore(1+sz)
     buf.appendHeader(h)
     var m = msg
-    buf.appendData(addr(m.vFixStr[0]), sz)
+    if sz > 0: buf.appendData(addr(m.vFixStr[0]), sz)
   of mkStr8:
     #echo "str8"
     let sz = len(msg.vStr8)
@@ -715,7 +715,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xd9)
     buf.appendBe8(uint8(sz))
     var m = msg
-    buf.appendData(addr(m.vStr8[0]), sz)
+    if sz > 0: buf.appendData(addr(m.vStr8[0]), sz)
   of mkStr16:
     #echo "str16"
     let sz = len(msg.vStr16)
@@ -723,7 +723,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xda)
     buf.appendBe16(uint16(sz))
     var m = msg
-    buf.appendData(addr(m.vStr16[0]), sz)
+    if sz > 0: buf.appendData(addr(m.vStr16[0]), sz)
   of mkStr32:
     #echo "str32"
     let sz = len(msg.vStr32)
@@ -731,7 +731,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xdb)
     buf.appendBe32(uint32(sz))
     var m = msg
-    buf.appendData(addr(m.vStr32[0]), sz)
+    if sz > 0: buf.appendData(addr(m.vStr32[0]), sz)
   of mkBin8:
     #echo "bin8"
     let sz = len(msg.vBin8)
@@ -739,7 +739,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xc4)
     buf.appendBe8(uint8(sz))
     var m = msg
-    buf.appendData(addr(m.vBin8[0]), sz)
+    if sz > 0: buf.appendData(addr(m.vBin8[0]), sz)
   of mkBin16:
     #echo "bin16"
     let sz = len(msg.vBin16)
@@ -747,7 +747,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xc5)
     buf.appendBe16(uint16(sz))
     var m = msg
-    buf.appendData(addr(m.vBin16[0]), sz)
+    if sz > 0: buf.appendData(addr(m.vBin16[0]), sz)
   of mkBin32:
     #echo "bin32"
     let sz = len(msg.vBin32)
@@ -755,7 +755,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendHeader(0xc6)
     buf.appendBe32(uint32(sz))
     var m = msg
-    buf.appendData(addr(m.vBin32[0]), sz)
+    if sz > 0: buf.appendData(addr(m.vBin32[0]), sz)
   of mkFixExt1:
     #echo "fixext1"
     buf.ensureMore(3)
@@ -805,7 +805,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe8(uint8(sz))
     buf.appendBe8(uint8(a))
     # var m = msg
-    buf.appendData(addr(b[0]), sz)
+    if sz > 0: buf.appendData(addr(b[0]), sz)
   of mkExt16:
     #echo "ext16"
     var (a, b) = msg.vExt16
@@ -815,7 +815,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe16(uint16(sz))
     buf.appendBe8(uint8(a))
     # var m = msg
-    buf.appendData(addr(b[0]), sz)
+    if sz > 0: buf.appendData(addr(b[0]), sz)
   of mkExt32:
     #echo "ext32"
     var (a, b) = msg.vExt32
@@ -825,7 +825,7 @@ proc pack(pc: Packer, msg: Msg) =
     buf.appendBe32(uint32(sz))
     buf.appendBe8(uint8(a))
     # var m = msg
-    buf.appendData(addr(b[0]), sz)
+    if sz > 0: buf.appendData(addr(b[0]), sz)
 
 # ------------------------------------------------------------------------------
 
@@ -970,37 +970,37 @@ proc unpack(upc: Unpacker): Msg =
     #echo "str8"
     let sz = int(buf.popBe8)
     var s = newString(sz)
-    buf.popData(addr(s[0]), sz)
+    if sz > 0: buf.popData(addr(s[0]), sz)
     Str8(s)
   of 0xda:
     #echo "str16"
     let sz = int(buf.popBe16)
     var s = newString(sz)
-    buf.popData(addr(s[0]), sz)
+    if sz > 0: buf.popData(addr(s[0]), sz)
     Str16(s)
   of 0xdb:
     #echo "str32"
     let sz = int(buf.popBe32)
     var s = newString(sz)
-    buf.popData(addr(s[0]), sz)
+    if sz > 0: buf.popData(addr(s[0]), sz)
     Str32(s)
   of 0xc4:
     #echo "bin8"
     let sz = int(buf.popBe8)
     var d = newSeq[byte](sz)
-    buf.popData(addr(d[0]), sz)
+    if sz > 0: buf.popData(addr(d[0]), sz)
     Bin8(d)
   of 0xc5:
     #echo "bin16"
     let sz = int(buf.popBe16)
     var d = newSeq[byte](sz)
-    buf.popData(addr(d[0]), sz)
+    if sz > 0: buf.popData(addr(d[0]), sz)
     Bin16(d)
   of 0xc6:
     #echo "bin32"
     let sz = int(buf.popBe32)
     var d = newSeq[byte](sz)
-    buf.popData(addr(d[0]), sz)
+    if sz > 0: buf.popData(addr(d[0]), sz)
     Bin32(d)
   of 0xd4:
     #echo "fixext1"
@@ -1037,21 +1037,21 @@ proc unpack(upc: Unpacker): Msg =
     let sz = int(buf.popBe8)
     let t = int(buf.popBe8)
     var d = newSeq[byte](sz)
-    buf.popData(addr(d[0]), sz)
+    if sz > 0: buf.popData(addr(d[0]), sz)
     Ext8((t, d))
   of 0xc8:
     #echo "ext16"
     let sz = int(buf.popBe16)
     let t = int(buf.popBe8)
     var d = newSeq[byte](sz)
-    buf.popData(addr(d[0]), sz)
+    if sz > 0: buf.popData(addr(d[0]), sz)
     Ext16((t, d))
   of 0xc9:
     #echo "ext32"
     let sz = int(buf.popBe32)
     let t = int(buf.popBe8)
     var d = newSeq[byte](sz)
-    buf.popData(addr(d[0]), sz)
+    if sz > 0: buf.popData(addr(d[0]), sz)
     Ext32((t, d))
   else:
     assert(false) # not reachable
